@@ -333,17 +333,9 @@ contains
 
         call s_compute_rhs(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, pb_ts(1)%sf, rhs_pb, mv_ts(1)%sf, rhs_mv, t_step, time_avg)
 
-#ifdef DEBUG
-        print *, 'got rhs'
-#endif
-
         if (run_time_info) then
             call s_write_run_time_information(q_prim_vf, t_step)
         end if
-
-#ifdef DEBUG
-        print *, 'wrote runtime info'
-#endif
 
         if (probe_wrt) then
             call s_time_step_cycling(t_step)
@@ -379,23 +371,10 @@ contains
                                 pb_ts(1)%sf(j, k, l, q, i) = &
                                     pb_ts(1)%sf(j, k, l, q, i) &
                                     + dt*rhs_pb(j, k, l, q, i)
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
-
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
                                 mv_ts(1)%sf(j, k, l, q, i) = &
                                     mv_ts(1)%sf(j, k, l, q, i) &
                                     + dt*rhs_mv(j, k, l, q, i)
+
                             end do
                         end do
                     end do
@@ -403,25 +382,7 @@ contains
             end do
         end if
 
-        call nvtxStartRange("body_forces")
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, dt)
-        call nvtxEndRange
-
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(1)%vf)
-
-        if (model_eqns == 3) call s_pressure_relaxation_procedure(q_cons_ts(1)%vf)
-
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(1)%vf)
-
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf)
-            end if
-        end if
-
-        call nvtxEndRange
+        call s_finalize_runge_kutta_substep(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf, rhs_vf, dt)
 
         ! ==================================================================
 
@@ -484,20 +445,6 @@ contains
                                 pb_ts(2)%sf(j, k, l, q, i) = &
                                     pb_ts(1)%sf(j, k, l, q, i) &
                                     + dt*rhs_pb(j, k, l, q, i)
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
-
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
                                 mv_ts(2)%sf(j, k, l, q, i) = &
                                     mv_ts(1)%sf(j, k, l, q, i) &
                                     + dt*rhs_mv(j, k, l, q, i)
@@ -508,26 +455,7 @@ contains
             end do
         end if
 
-        call nvtxStartRange("body_forces")
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, dt)
-        call nvtxEndRange
-
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(2)%vf)
-
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(2)%vf)
-        end if
-
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(2)%vf)
-
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf)
-            end if
-        end if
-        ! ==================================================================
+        call s_finalize_runge_kutta_substep(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf, rhs_vf, dt)
 
         ! Stage 2 of 2 =====================================================
 
@@ -558,20 +486,6 @@ contains
                                     (pb_ts(1)%sf(j, k, l, q, i) &
                                      + pb_ts(2)%sf(j, k, l, q, i) &
                                      + dt*rhs_pb(j, k, l, q, i))/2d0
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
-
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
                                 mv_ts(1)%sf(j, k, l, q, i) = &
                                     (mv_ts(1)%sf(j, k, l, q, i) &
                                      + mv_ts(2)%sf(j, k, l, q, i) &
@@ -583,27 +497,7 @@ contains
             end do
         end if
 
-        call nvtxStartRange("body_forces")
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, 2d0*dt/3d0)
-        call nvtxEndRange
-
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(1)%vf)
-
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(1)%vf)
-        end if
-
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(1)%vf)
-
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf)
-            end if
-        end if
-
-        call nvtxEndRange
+        call s_finalize_runge_kutta_substep(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf, rhs_vf, 2d0*dt/3d0)
 
         call cpu_time(finish)
         ! ==================================================================
@@ -669,20 +563,6 @@ contains
                                 pb_ts(2)%sf(j, k, l, q, i) = &
                                     pb_ts(1)%sf(j, k, l, q, i) &
                                     + dt*rhs_pb(j, k, l, q, i)
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
-
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
                                 mv_ts(2)%sf(j, k, l, q, i) = &
                                     mv_ts(1)%sf(j, k, l, q, i) &
                                     + dt*rhs_mv(j, k, l, q, i)
@@ -693,26 +573,7 @@ contains
             end do
         end if
 
-        call nvtxStartRange("body_forces")
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, dt)
-        call nvtxEndRange
-
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(2)%vf)
-
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(2)%vf)
-        end if
-
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(2)%vf)
-
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf)
-            end if
-        end if
-        ! ==================================================================
+        call s_finalize_runge_kutta_substep(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf, rhs_vf, dt)
 
         ! Stage 2 of 3 =====================================================
 
@@ -743,20 +604,6 @@ contains
                                     (3d0*pb_ts(1)%sf(j, k, l, q, i) &
                                      + pb_ts(2)%sf(j, k, l, q, i) &
                                      + dt*rhs_pb(j, k, l, q, i))/4d0
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
-
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
                                 mv_ts(2)%sf(j, k, l, q, i) = &
                                     (3d0*mv_ts(1)%sf(j, k, l, q, i) &
                                      + mv_ts(2)%sf(j, k, l, q, i) &
@@ -768,26 +615,7 @@ contains
             end do
         end if
 
-        call nvtxStartRange("body_forces")
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, dt/4d0)
-        call nvtxEndRange
-
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(2)%vf)
-
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(2)%vf)
-        end if
-
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(2)%vf)
-
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf)
-            end if
-        end if
-        ! ==================================================================
+        call s_finalize_runge_kutta_substep(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf, rhs_vf, dt/4d0)
 
         ! Stage 3 of 3 =====================================================
         call s_compute_rhs(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, pb_ts(2)%sf, rhs_pb, mv_ts(2)%sf, rhs_mv, t_step, time_avg)
@@ -817,20 +645,6 @@ contains
                                     (pb_ts(1)%sf(j, k, l, q, i) &
                                      + 2d0*pb_ts(2)%sf(j, k, l, q, i) &
                                      + 2d0*dt*rhs_pb(j, k, l, q, i))/3d0
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
-
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
                                 mv_ts(1)%sf(j, k, l, q, i) = &
                                     (mv_ts(1)%sf(j, k, l, q, i) &
                                      + 2d0*mv_ts(2)%sf(j, k, l, q, i) &
@@ -842,25 +656,7 @@ contains
             end do
         end if
 
-        call nvtxStartRange("body_forces")
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, 2d0*dt/3d0)
-        call nvtxEndRange
-
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(1)%vf)
-
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(1)%vf)
-        end if
-
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(1)%vf)
-
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf)
-            end if
-        end if
+        call s_finalize_runge_kutta_substep(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf, rhs_vf, 2d0*dt/3d0)
 
         if (.not. adap_dt) then
             call nvtxEndRange
@@ -871,6 +667,35 @@ contains
         ! ==================================================================
 
     end subroutine s_3rd_order_tvd_rk
+
+
+    subroutine s_finalize_runge_kutta_substep(q_cons_vf, q_prim_vf, pb_sf, mv_sf, rhs_vf, dt)
+
+        type(scalar_field), dimension(sys_size) :: q_cons_vf, q_prim_vf, rhs_vf
+        real(kind(0d0)), dimension(:,:,:,:,:) :: pb_sf, mv_sf
+        real(kind(0d0)) :: dt
+
+        call nvtxStartRange("body_forces")
+        if (bodyForces) call s_apply_bodyforces(q_cons_vf, q_prim_vf, rhs_vf, dt)
+        call nvtxEndRange
+
+        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_vf)
+
+        if (model_eqns == 3 .and. (.not. relax)) then
+            call s_pressure_relaxation_procedure(q_cons_vf)
+        end if
+
+        if (adv_n) call s_comp_alpha_from_n(q_cons_vf)
+
+        if (ib) then
+            if (qbmm .and. .not. polytropic) then
+                call s_ibm_correct_state(q_cons_vf, q_prim_vf, pb_sf, mv_sf)
+            else
+                call s_ibm_correct_state(q_cons_vf, q_prim_vf)
+            end if
+        end if
+
+    end subroutine s_finalize_runge_kutta_substep
 
     !> Strang splitting scheme with 3rd order TVD RK time-stepping algorithm for
         !!      the flux term and adaptive time stepping algorithm for
@@ -1053,6 +878,7 @@ contains
         end if
 
     end subroutine s_time_step_cycling
+
     !> Module deallocation and/or disassociation procedures
     subroutine s_finalize_time_steppers_module
 
