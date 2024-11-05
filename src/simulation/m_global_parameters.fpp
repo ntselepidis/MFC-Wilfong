@@ -639,7 +639,7 @@ contains
             num_fluids = dflt_int
             muscl_order = dflt_int
             muscl_lim = dflt_int
-            recon_type = 1 !< default to weno
+            recon_type = dflt_int !< default to weno
         #:endif
 
         R0_type = dflt_int
