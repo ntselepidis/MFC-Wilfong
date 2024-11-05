@@ -47,7 +47,11 @@ contains
         ! Run by all three stages
         call s_check_inputs_simulation_domain
         call s_check_inputs_model_eqns_and_num_fluids
-        call s_check_inputs_weno
+        if (recon_type == 1) then
+            call s_check_inputs_weno
+        elseif (recon_type == 2) then
+            call s_check_inputs_muscl
+        end if
         call s_check_inputs_bc
         call s_check_inputs_stiffened_eos
         call s_check_inputs_surface_tension
@@ -199,6 +203,10 @@ contains
         @:PROHIBIT(n > 0 .and. n + 1 < weno_order, "n must be at least weno_order - 1")
         @:PROHIBIT(p > 0 .and. p + 1 < weno_order, "p must be at least weno_order - 1")
     end subroutine s_check_inputs_weno
+
+    subroutine s_check_inputs_muscl
+
+    end subroutine s_check_inputs_muscl
 
     !> Checks constraints on the boundary conditions in the x-direction.
         !! Called by s_check_inputs_common for all three stages

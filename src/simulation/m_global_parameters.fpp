@@ -128,7 +128,11 @@ module m_global_parameters
 
     #:if MFC_CASE_OPTIMIZATION
         integer, parameter :: weno_polyn = ${weno_polyn}$ !< Degree of the WENO polynomials (polyn)
+        integer, parameter :: muscl_polyn = ${muscl_polyn}$ !< Degree of the MUSCL polynomials
         integer, parameter :: weno_order = ${weno_order}$ !< Order of the WENO reconstruction
+        integer, parameter :: muscl_order = ${muscl_order}$ !< Order of the MUSCL reconstructiona
+        integer, parameter :: muscl_lim = ${muscl_lim}$ !< MUSCL limiter
+        integer, parameter :: recon_type = ${recon_type}$ !< Reconstruction type
         integer, parameter :: weno_num_stencils = ${weno_num_stencils}$ !< Number of stencils for WENO reconstruction (only different from weno_polyn for TENO(>5))
         integer, parameter :: num_fluids = ${num_fluids}$ !< number of fluids in the simulation
         logical, parameter :: wenojs = (${wenojs}$ /= 0)            !< WENO-JS (default)
@@ -138,7 +142,11 @@ module m_global_parameters
         real(kind(0d0)), parameter :: wenoz_q = ${wenoz_q}$         !< Power constant for WENO-Z
     #:else
         integer :: weno_polyn     !< Degree of the WENO polynomials (polyn)
+        integer :: muscl_polyn    !< Decree of the MUSCL polynomials
         integer :: weno_order     !< Order of the WENO reconstruction
+        integer :: muscl_order    !< Order of the MUSCL reconstruction
+        integer :: muscl_lim      !< MUSCL limiter
+        integer :: recon_type     !< Reconstruction type
         integer :: weno_num_stencils    !< Number of stencils for WENO reconstruction (only different from weno_polyn for TENO(>5))
         integer :: num_fluids     !< number of fluids in the simulation
         logical :: wenojs         !< WENO-JS (default)
@@ -161,6 +169,7 @@ module m_global_parameters
     logical :: null_weights   !< Null undesired WENO weights
     logical :: mixture_err    !< Mixture properties correction
     logical :: hypoelasticity !< hypoelasticity modeling
+    logical :: int_comp       !< THINC interface compression
     logical, parameter :: chemistry = .${chemistry}$. !< Chemistry modeling
     logical :: cu_tensor
 
@@ -180,7 +189,7 @@ module m_global_parameters
     integer :: cpu_start, cpu_end, cpu_rate
 
     #:if not MFC_CASE_OPTIMIZATION
-        !$acc declare create(num_dims, weno_polyn, weno_order, weno_num_stencils, num_fluids, wenojs, mapped_weno, wenoz, teno, wenoz_q)
+        !$acc declare create(num_dims, weno_polyn, muscl_polyn, weno_order, recon_type, muscl_order, muscl_lim, weno_num_stencils, num_fluids, wenojs, mapped_weno, wenoz, teno, wenoz_q)
     #:endif
 
     !$acc declare create(mpp_lim, model_eqns, mixture_err, alt_soundspeed, avg_state, mp_weno, weno_eps, teno_CT, hypoelasticity, low_Mach)
@@ -559,6 +568,7 @@ contains
         palpha_eps = dflt_real
         ptgalpha_eps = dflt_real
         hypoelasticity = .false.
+        int_comp = .false.
         weno_flat = .true.
         riemann_flat = .true.
         rdma_mpi = .false.
@@ -627,6 +637,9 @@ contains
             nb = 1
             weno_order = dflt_int
             num_fluids = dflt_int
+            muscl_order = dflt_int
+            muscl_lim = dflt_int
+            recon_type = 1 !< default to weno
         #:endif
 
         R0_type = dflt_int
@@ -722,13 +735,17 @@ contains
 
         #:if not MFC_CASE_OPTIMIZATION
             ! Determining the degree of the WENO polynomials
-            weno_polyn = (weno_order - 1)/2
-            if (teno) then
-                weno_num_stencils = weno_order - 3
-            else
-                weno_num_stencils = weno_polyn
+            if (recon_type == 1) then
+                weno_polyn = (weno_order - 1)/2
+                if (teno) then
+                    weno_num_stencils = weno_order - 3
+                else
+                    weno_num_stencils = weno_polyn
+                end if
+            elseif (recon_type == 2) then
+                muscl_polyn = muscl_order
             end if
-            !$acc update device(weno_polyn)
+            !$acc update device(weno_polyn, muscl_polyn)
             !$acc update device(weno_num_stencils)
             !$acc update device(nb)
             !$acc update device(num_dims, num_fluids)
@@ -1049,14 +1066,17 @@ contains
         ! sufficient boundary conditions data as to iterate the solution in
         ! the physical computational domain from one time-step iteration to
         ! the next one
-        if (any(Re_size > 0)) then
-            buff_size = 2*weno_polyn + 2
-!        else if (hypoelasticity) then !TODO: check if necessary
-!            buff_size = 2*weno_polyn + 2
-        else
-            buff_size = weno_polyn + 2
+        if (recon_type == 1) then
+            if (any(Re_size > 0)) then
+                buff_size = 2*weno_polyn + 2
+    !        else if (hypoelasticity) then !TODO: check if necessary
+    !            buff_size = 2*weno_polyn + 2
+            else
+                buff_size = weno_polyn + 2
+            end if
+        elseif (recon_type == 2) then
+            buff_size = muscl_polyn + 2
         end if
-
         ! Configuring Coordinate Direction Indexes =========================
         idwint(1)%beg = 0; idwint(2)%beg = 0; idwint(3)%beg = 0
         idwint(1)%end = m; idwint(2)%end = n; idwint(3)%end = p

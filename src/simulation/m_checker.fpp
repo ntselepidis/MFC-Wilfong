@@ -26,7 +26,11 @@ contains
 
         call s_check_inputs_compilers
 
-        call s_check_inputs_weno
+        if (recon_type == 1) then
+            call s_check_inputs_weno
+        elseif (recon_type == 2) then
+            call s_check_inputs_muscl
+        end if
         call s_check_inputs_riemann_solver
         call s_check_inputs_time_stepping
         call s_check_inputs_model_eqns
@@ -79,6 +83,12 @@ contains
         @:PROHIBIT(weno_order /= 5 .and. mp_weno)
         @:PROHIBIT(model_eqns == 1 .and. weno_avg)
     end subroutine s_check_inputs_weno
+
+    subroutine s_check_inputs_muscl
+
+        character(len=5) :: numStr
+
+    end subroutine s_check_inputs_muscl
 
     !> Checks constraints on Riemann solver parameters
     subroutine s_check_inputs_riemann_solver
@@ -272,8 +282,10 @@ contains
                     "model_eqns = 1 does not support fluid_pp("//trim(iStr)//")%"// "Re("//trim(jStr)//")")
                 @:PROHIBIT(i > num_fluids .and. (.not. f_is_default(fluid_pp(i)%Re(j))), &
                     "First index ("//trim(iStr)//") of fluid_pp("//trim(iStr)//")%"// "Re("//trim(jStr)//") exceeds num_fluids")
-                @:PROHIBIT(weno_order == 1 .and. (.not. weno_avg) .and. (.not. f_is_default(fluid_pp(i)%Re(j))), &
-                    "weno_order = 1 without weno_avg does not support fluid_pp("//trim(iStr)//")%"// "Re("//trim(jStr)//")")
+                if (recon_type == 1) then
+                    @:PROHIBIT(weno_order == 1 .and. (.not. weno_avg) .and. (.not. f_is_default(fluid_pp(i)%Re(j))), &
+                        "weno_order = 1 without weno_avg does not support fluid_pp("//trim(iStr)//")%"// "Re("//trim(jStr)//")")
+                end if
             end do
         end do
     end subroutine s_check_inputs_stiffened_eos_viscosity

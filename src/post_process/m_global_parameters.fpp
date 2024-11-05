@@ -109,6 +109,7 @@ module m_global_parameters
     logical :: mixture_err     !< Mixture error limiter
     logical :: alt_soundspeed  !< Alternate sound speed
     logical :: hypoelasticity  !< Turn hypoelasticity on
+    integer :: recon_type      !< reconstruction type
     logical, parameter :: chemistry = .${chemistry}$. !< Chemistry modeling
     !> @}
 
@@ -326,6 +327,8 @@ contains
         relax = .false.
         relax_model = dflt_int
         hypoelasticity = .false.
+
+        recon_type = 1 ! defauilt to WENO
 
         bc_x%beg = dflt_int; bc_x%end = dflt_int
         bc_y%beg = dflt_int; bc_y%end = dflt_int

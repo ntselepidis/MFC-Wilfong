@@ -78,6 +78,8 @@ module m_start_up
     use m_surface_tension
 
     use m_body_forces
+
+    use m_muscl
     ! ==========================================================================
 
     implicit none
@@ -164,7 +166,8 @@ contains
             pi_fac, adv_n, adap_dt, bf_x, bf_y, bf_z, &
             k_x, k_y, k_z, w_x, w_y, w_z, p_x, p_y, p_z, &
             g_x, g_y, g_z, n_start, t_save, t_stop, &
-            cfl_adap_dt, cfl_const_dt, cfl_target
+            cfl_adap_dt, cfl_const_dt, cfl_target, &
+            recon_type, muscl_order, muscl_lim
 
         ! Checking that an input file has been provided by the user. If it
         ! has, then the input file is read in, otherwise, simulation exits.
@@ -1372,8 +1375,11 @@ contains
         ! Computation of parameters, allocation of memory, association of pointers,
         ! and/or execution of any other tasks that are needed to properly configure
         ! the modules. The preparations below DO DEPEND on the grid being complete.
-        call s_initialize_weno_module()
-
+        if (recon_type == 1) then
+            call s_initialize_weno_module()
+        elseif (recon_type == 2) then
+            call s_initialize_muscl_module()
+        end if
 #if defined(MFC_OpenACC) && defined(MFC_MEMORY_DUMP)
         print *, "[MEM-INST] After: s_initialize_weno_module"
         call acc_present_dump()
@@ -1501,7 +1507,11 @@ contains
         call s_finalize_rhs_module()
         call s_finalize_cbc_module()
         call s_finalize_riemann_solvers_module()
-        call s_finalize_weno_module()
+        if (recon_type == 1) then
+            call s_finalize_weno_module()
+        else if (recon_type == 2) then
+            call s_finalize_muscl_module()
+        end if
         call s_finalize_variables_conversion_module()
         if (grid_geometry == 3) call s_finalize_fftw_module
         call s_finalize_mpi_proxy_module()

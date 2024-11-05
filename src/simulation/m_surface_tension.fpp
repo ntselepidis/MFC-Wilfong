@@ -324,67 +324,71 @@ contains
 
         integer :: i, j, k, l
 
-        ! Reconstruction in s1-direction ===================================
+        #:for SCHEME, TYPE in [('weno', 1),('muscl', 2)]
+        if (recon_type == ${TYPE}$) then
+            ! Reconstruction in s1-direction ===================================
 
-        if (norm_dir == 1) then
-            is1 = idwbuff(1); is2 = idwbuff(2); is3 = idwbuff(3)
-            recon_dir = 1; is1%beg = is1%beg + weno_polyn
-            is1%end = is1%end - weno_polyn
+            if (norm_dir == 1) then
+                is1 = idwbuff(1); is2 = idwbuff(2); is3 = idwbuff(3)
+                recon_dir = 1; is1%beg = is1%beg + ${SCHEME}$_polyn
+                is1%end = is1%end - ${SCHEME}$_polyn
 
-        elseif (norm_dir == 2) then
-            is1 = idwbuff(2); is2 = idwbuff(1); is3 = idwbuff(3)
-            recon_dir = 2; is1%beg = is1%beg + weno_polyn
-            is1%end = is1%end - weno_polyn
+            elseif (norm_dir == 2) then
+                is1 = idwbuff(2); is2 = idwbuff(1); is3 = idwbuff(3)
+                recon_dir = 2; is1%beg = is1%beg + ${SCHEME}$_polyn
+                is1%end = is1%end - ${SCHEME}$_polyn
 
-        else
-            is1 = idwbuff(3); is2 = idwbuff(2); is3 = idwbuff(1)
-            recon_dir = 3; is1%beg = is1%beg + weno_polyn
-            is1%end = is1%end - weno_polyn
+            else
+                is1 = idwbuff(3); is2 = idwbuff(2); is3 = idwbuff(1)
+                recon_dir = 3; is1%beg = is1%beg + ${SCHEME}$_polyn
+                is1%end = is1%end - ${SCHEME}$_polyn
 
+            end if
+
+            !$acc update device(is1, is2, is3, iv)
+
+            if (recon_dir == 1) then
+                !$acc parallel loop collapse(4) default(present)
+                do i = iv%beg, iv%end
+                    do l = is3%beg, is3%end
+                        do k = is2%beg, is2%end
+                            do j = is1%beg, is1%end
+                                vL_x(j, k, l, i) = v_vf(i)%sf(j, k, l)
+                                vR_x(j, k, l, i) = v_vf(i)%sf(j, k, l)
+                            end do
+                        end do
+                    end do
+                end do
+                !$acc end parallel loop
+            else if (recon_dir == 2) then
+                !$acc parallel loop collapse(4) default(present)
+                do i = iv%beg, iv%end
+                    do l = is3%beg, is3%end
+                        do k = is2%beg, is2%end
+                            do j = is1%beg, is1%end
+                                vL_y(j, k, l, i) = v_vf(i)%sf(k, j, l)
+                                vR_y(j, k, l, i) = v_vf(i)%sf(k, j, l)
+                            end do
+                        end do
+                    end do
+                end do
+                !$acc end parallel loop
+            else if (recon_dir == 3) then
+                !$acc parallel loop collapse(4) default(present)
+                do i = iv%beg, iv%end
+                    do l = is3%beg, is3%end
+                        do k = is2%beg, is2%end
+                            do j = is1%beg, is1%end
+                                vL_z(j, k, l, i) = v_vf(i)%sf(l, k, j)
+                                vR_z(j, k, l, i) = v_vf(i)%sf(l, k, j)
+                            end do
+                        end do
+                    end do
+                end do
+                !$acc end parallel loop
+            end if
         end if
-
-        !$acc update device(is1, is2, is3, iv)
-
-        if (recon_dir == 1) then
-            !$acc parallel loop collapse(4) default(present)
-            do i = iv%beg, iv%end
-                do l = is3%beg, is3%end
-                    do k = is2%beg, is2%end
-                        do j = is1%beg, is1%end
-                            vL_x(j, k, l, i) = v_vf(i)%sf(j, k, l)
-                            vR_x(j, k, l, i) = v_vf(i)%sf(j, k, l)
-                        end do
-                    end do
-                end do
-            end do
-            !$acc end parallel loop
-        else if (recon_dir == 2) then
-            !$acc parallel loop collapse(4) default(present)
-            do i = iv%beg, iv%end
-                do l = is3%beg, is3%end
-                    do k = is2%beg, is2%end
-                        do j = is1%beg, is1%end
-                            vL_y(j, k, l, i) = v_vf(i)%sf(k, j, l)
-                            vR_y(j, k, l, i) = v_vf(i)%sf(k, j, l)
-                        end do
-                    end do
-                end do
-            end do
-            !$acc end parallel loop
-        else if (recon_dir == 3) then
-            !$acc parallel loop collapse(4) default(present)
-            do i = iv%beg, iv%end
-                do l = is3%beg, is3%end
-                    do k = is2%beg, is2%end
-                        do j = is1%beg, is1%end
-                            vL_z(j, k, l, i) = v_vf(i)%sf(l, k, j)
-                            vR_z(j, k, l, i) = v_vf(i)%sf(l, k, j)
-                        end do
-                    end do
-                end do
-            end do
-            !$acc end parallel loop
-        end if
+        #:endfor
 
     end subroutine s_reconstruct_cell_boundary_values_capillary
 

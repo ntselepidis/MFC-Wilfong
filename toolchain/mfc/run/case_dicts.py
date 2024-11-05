@@ -87,7 +87,8 @@ PRE_PROCESS.update({
     'num_ibs': ParamType.INT,
     'cfl_dt': ParamType.LOG,
     'n_start': ParamType.INT,
-    'n_start_old': ParamType.INT
+    'n_start_old': ParamType.INT,
+    'recon_type': ParamType.INT,
 })
 
 for ib_id in range(1, 10+1):
@@ -225,6 +226,9 @@ SIMULATION.update({
     't_save': ParamType.REAL,
     'cfl_target': ParamType.REAL,
     'low_Mach': ParamType.INT,
+    'recon_type': ParamType.INT,
+    'muscl_order': ParamType.INT,
+    'muscl_lim': ParamType.INT,
 })
 
 for var in [ 'diffusion', 'reactions' ]:
@@ -336,6 +340,7 @@ POST_PROCESS.update({
     't_save': ParamType.REAL,
     't_stop': ParamType.REAL,
     'n_start': ParamType.INT,
+    'recon_type': ParamType.INT,
 })
 
 for cmp_id in range(1,3+1):
