@@ -56,6 +56,27 @@
             q_prim_vf(advxe)%sf(i, j, k) = patch_icpp(1)%alpha(2)
         end if
 
+    case (302) ! 3D Richtmyer-Meshkov instability
+
+        if (y_cc(j) >= 2 - 0.25_wp*(cos(0.5_wp*pi*x_cc(i)) + cos(0.5_wp*pi*z_cc(k)))) then
+            q_prim_vf(contxb)%sf(i, j, k) = 0.25_wp
+            q_prim_vf(momxb)%sf(i, j, k) = 0.0_wp
+            q_prim_vf(momxb+1)%sf(i, j, k) = 0.0_wp
+            q_prim_vf(momxb+2)%sf(i, j, k) = 0.0_wp
+            q_prim_vf(E_idx)%sf(i, j, k) = 1.0_wp
+        elseif (y_cc(j) >= 0.5_wp .and. y_cc(j) <  2 - 0.25_wp*cos(0.5_wp*pi*x_cc(i)) + cos(0.5_wp*pi*z_cc(k))) then
+            q_prim_vf(contxb)%sf(i, j, k) = 1_wp
+            q_prim_vf(momxb)%sf(i, j, k) = 0.0_wp
+            q_prim_vf(momxb+1)%sf(i, j, k) = 0.0_wp
+            q_prim_vf(momxb+2)%sf(i, j, k) = 0.0_wp
+            q_prim_vf(E_idx)%sf(i, j, k) = 1.0_wp
+        else
+            q_prim_vf(contxb)%sf(i, j, k) = 8.0_wp/3.0_wp
+            q_prim_vf(momxb)%sf(i, j, k) = 0.0_wp
+            q_prim_vf(momxb+1)%sf(i, j, k) = 0.0_wp
+            q_prim_vf(momxb+2)%sf(i, j, k) = 0.0_wp
+            q_prim_vf(E_idx)%sf(i, j, k) = 4.0_wp
+        end if
         ! Put your variable assignments here
     case default
         call s_int_to_str(patch_id, iStr)
