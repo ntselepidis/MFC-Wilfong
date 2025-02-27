@@ -88,8 +88,21 @@ module m_derived_types
         real(wp), dimension(3) :: vel_in, vel_out
         real(wp), dimension(num_fluids_max) :: alpha_rho_in, alpha_in
         logical :: grcbc_in, grcbc_out, grcbc_vel_out
-
     end type int_bounds_info
+
+    type bc_patch_parameters
+        integer :: geometry
+        integer :: type
+        integer :: dir
+        integer :: loc
+        real(wp), dimension(3) :: vel
+        real(wp), dimension(num_fluids_max) :: alpha_rho
+        real(wp), dimension(num_fluids_max) :: alpha
+        real(wp) :: pres
+        real(wp), dimension(3) :: centroid
+        real(wp), dimension(3) :: length
+        real(wp) :: radius
+    end type bc_patch_parameters
 
     !> Derived type adding beginning (beg) and end bounds info as attributes
     type bounds_info

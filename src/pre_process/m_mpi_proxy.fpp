@@ -123,6 +123,20 @@ contains
             call MPI_BCAST(${VAR}$, 1, mpi_p, 0, MPI_COMM_WORLD, ierr)
         #:endfor
 
+        do i = 1, num_bc_patches_max
+            #:for VAR in ['geometry', 'type', 'dir', 'loc']
+                call MPI_BCAST(patch_bc(i)%${VAR}$, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
+            #:endfor
+
+            #:for VAR in ['pres', 'radius']
+                call MPI_BCAST(patch_bc(i)%${VAR}$, 1, mpi_p, 0, MPI_COMM_WORLD, ierr)
+            #:endfor
+
+            #:for VAR in ['vel', 'alpha_rho', 'alpha', 'centroid', 'length']
+                call MPI_BCAST(patch_bc(i)%${VAR}$, size(patch_bc(i)%${VAR}$), mpi_p, 0, MPI_COMM_WORLD, ierr)
+            #:endfor
+        end do
+
         do i = 1, num_patches_max
             #:for VAR in [ 'geometry', 'smooth_patch_id']
                 call MPI_BCAST(patch_icpp(i)%${VAR}$, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)

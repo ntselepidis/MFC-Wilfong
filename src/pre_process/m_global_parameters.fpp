@@ -39,7 +39,7 @@ module m_global_parameters
     integer :: m
     integer :: n
     integer :: p
-    integer, parameter :: buff_size = 1 ! buff size for elliptic smoothing
+    integer, parameter :: buff_size = 2 ! buff size for elliptic smoothing
 
     integer(8) :: nGlobal !< Global number of cells in the domain
 
@@ -175,6 +175,11 @@ module m_global_parameters
     !! patches employed in the configuration of the initial condition. Note that
     !! the maximum allowable number of patches, num_patches_max, may be changed
     !! in the module m_derived_types.f90.
+
+    integer :: num_bc_patches  !< Number of boundary condition patches
+    type(bc_patch_parameters), dimension(num_bc_patches_max) :: patch_bc
+    !! Database of the boundary condition patch parameters for each of the patches
+    !! employed in the configuration of the boundary conditions
 
     ! Fluids Physical Parameters
     type(physical_parameters), dimension(num_fluids_max) :: fluid_pp !<
@@ -405,6 +410,22 @@ contains
             if (chemistry) then
                 patch_icpp(i)%Y(:) = 0._wp
             end if
+        end do
+
+        num_bc_patches = 0
+
+        do i = 1, num_bc_patches_max
+            patch_bc(i)%geometry = dflt_int
+            patch_bc(i)%type = dflt_int
+            patch_bc(i)%dir = dflt_int
+            patch_bc(i)%loc = dflt_int
+            patch_bc(i)%vel(:) = dflt_real
+            patch_bc(i)%alpha_rho(:) = dflt_real
+            patch_bc(i)%alpha(:) = dflt_real
+            patch_bc(i)%pres = dflt_real
+            patch_bc(i)%centroid(:) = dflt_real
+            patch_bc(i)%length(:) = dflt_real
+            patch_bc(i)%radius = dflt_real
         end do
 
         ! Tait EOS
