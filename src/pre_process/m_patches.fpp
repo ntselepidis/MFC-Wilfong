@@ -158,9 +158,7 @@ contains
                     call s_circle(i, patch_id_fp, q_prim_vf)
                 ! Rectangular patch
                 elseif (patch_icpp(i)%geometry == 3) then
-                    print*, "ASDF1"; call sleep(1)
                     call s_rectangle(i, patch_id_fp, q_prim_vf)
-                    print*, "ASDF2"; call sleep(1)
                 ! Swept line patch
                 elseif (patch_icpp(i)%geometry == 4) then
                     call s_sweep_line(i, patch_id_fp, q_prim_vf)

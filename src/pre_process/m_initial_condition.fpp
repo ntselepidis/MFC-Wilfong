@@ -116,8 +116,8 @@ contains
         ! Allocating arrays to store the bc types
         allocate(bc_type(1:num_dims,-1:1))
 
-        allocate(bc_type(1,-1)%sf(0,0:n,0:p))
-        allocate(bc_type(1,1)%sf(0,0:n,0:p))
+        allocate(bc_type(1,-1)%sf(0:0,0:n,0:p))
+        allocate(bc_type(1,1)%sf(0:0,0:n,0:p))
 
         do l = 0, p
             do k = 0, n
@@ -127,8 +127,8 @@ contains
         end do
 
         if (n > 0) then
-            allocate(bc_type(2,-1)%sf(0:m,0,0:p))
-            allocate(bc_type(2,1)%sf(0:m,0,0:p))
+            allocate(bc_type(2,-1)%sf(0:m,0:0,0:p))
+            allocate(bc_type(2,1)%sf(0:m,0:0,0:p))
 
             do l = 0, p
                 do j = 0, m
@@ -138,8 +138,8 @@ contains
             end do
 
             if (p > 0) then
-                allocate(bc_type(3,-1)%sf(0:m,0:n,0))
-                allocate(bc_type(3,1)%sf(0:m,0:n,0))
+                allocate(bc_type(3,-1)%sf(0:m,0:n,0:0))
+                allocate(bc_type(3,1)%sf(0:m,0:n,0:0))
 
 
                 do k = 0, n
@@ -183,15 +183,13 @@ contains
         end if
 
         call s_apply_domain_patches(patch_id_fp, q_prim_vf, ib_markers%sf, levelset, levelset_norm)
-        print*, "HERE1"; call sleep(1)
         call s_apply_boundary_patches(q_prim_vf, bc_type)
-        print*, "HERE2"; call sleep(1)
 
         if (perturb_flow) call s_perturb_surrounding_flow(q_prim_vf)
         if (perturb_sph) call s_perturb_sphere(q_prim_vf)
         if (mixlayer_perturb) call s_superposition_instability_wave(q_prim_vf)
         if (elliptic_smoothing) call s_elliptic_smoothing(q_prim_vf, bc_type)
-        print*, "HERE3"; call sleep(1)
+
         ! Converting the primitive variables to the conservative ones
         call s_convert_primitive_to_conservative_variables(q_prim_vf, q_cons_vf)
 

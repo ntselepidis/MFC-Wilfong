@@ -14,11 +14,32 @@ module m_boundary_conditions
     real(wp) :: length_x, length_y, length_z
     type(bounds_info) :: x_boundary, y_boundary, z_boundary  !<
 
+    type(scalar_field), dimension(:,:,:), allocatable :: bc_buffers
+
     integer :: i, j, k, l
 
-    private; public :: s_apply_boundary_patches
+    private; public :: s_initialize_boundary_conditions_module, &
+        s_apply_boundary_patches, &
+        s_write_boundary_condition_files
 
 contains
+
+    subroutine s_initialize_boundary_conditions_module()
+
+        allocate(bc_buffers(1:num_dims, -1:1))
+
+        allocate(bc_buffers(1, -1)%sf(1:sys_size, 0:n, 0:p))
+        allocate(bc_buffers(1, 1)%sf(1:sys_size, 0:n, 0:p))
+        if (n > 0) then
+            allocate(bc_buffers(2,-1)%sf(0:m,1:sys_size,0:p))
+            allocate(bc_buffers(2,1)%sf(0:m,1:sys_size,0:p))
+            if (p > 0) then
+                allocate(bc_buffers(3,-1)%sf(0:m,0:n,1:sys_size))
+                allocate(bc_buffers(3,1)%sf(0:m,0:n,1:sys_size))
+            end if
+        end if
+
+    end subroutine s_initialize_boundary_conditions_module
 
     subroutine s_line_segment_bc(patch_id, q_prim_vf, bc_type)
 
@@ -85,6 +106,7 @@ contains
 
         type(scalar_field), dimension(sys_size) :: q_prim_vf
         type(integer_field), dimension(1:num_dims, -1:1) :: bc_type
+        integer :: i
 
         !< Apply 2D patches to 3D domain
         if (p > 0) then
@@ -113,5 +135,119 @@ contains
         end if
 
     end subroutine s_apply_boundary_patches
+
+    subroutine s_write_boundary_condition_files(q_prim_vf, bc_type, step_dirpath)
+
+        type(scalar_field), dimension(sys_size) :: q_prim_vf
+        type(integer_field), dimension(1:num_dims, -1:1) :: bc_type
+
+        character(LEN=*), intent(in) :: step_dirpath
+
+        integer :: dir, loc
+        character(len=path_len) :: file_path
+
+        character(len=10) :: status
+
+#ifdef MFC_MPI
+        integer :: ierr
+        integer :: file_id
+        integer :: offset
+        character(len=7) :: proc_rank_str
+#endif
+
+        if (old_grid) then
+            status = 'old'
+        else
+            status = 'new'
+        end if
+
+        call s_pack_boundary_condition_buffers(q_prim_vf)
+
+        if (parallel_io .eqv. .false.) then
+            file_path = trim(step_dirpath)//'/bc_type.dat'
+            open (1, FILE=trim(file_path), FORM='unformatted', STATUS=status)
+            do dir = 1, num_dims
+                do loc = -1, 1, 2
+                    write (1) bc_type(dir, loc)%sf
+                end do
+            end do
+            close (1)
+
+            file_path = trim(step_dirpath)//'/bc_buffers.dat'
+            open (1, FILE=trim(file_path), FORM='unformatted', STATUS=status)
+            do dir = 1, num_dims
+                do loc = -1, 1, 2
+                    write (1) bc_buffers(dir, loc)%sf
+                end do
+            end do
+            close (1)
+
+        else
+#ifdef MFC_MPI
+            if (file_per_process) then
+
+            else
+
+            end if
+#endif
+        end if
+
+    end subroutine s_write_boundary_condition_files
+
+    subroutine s_pack_boundary_condition_buffers(q_prim_vf)
+
+        type(scalar_field), dimension(sys_size) :: q_prim_vf
+
+        do k = 0, p
+            do j = 0, n
+                do i = 1, sys_size
+                    bc_buffers(1,-1)%sf(i,j,k) = q_prim_vf(i)%sf(-1,j,k)
+                    bc_buffers(1,1)%sf(i,j,k) = q_prim_vf(i)%sf(m+1,j,k)
+                end do
+            end do
+        end do
+
+        if (n > 0) then
+            do k = 0, p
+                do j = 1, sys_size
+                    do i = 0, m
+                        bc_buffers(2,-1)%sf(i,j,k) = q_prim_vf(j)%sf(i,-1,k)
+                        bc_buffers(2,1)%sf(i,j,k) = q_prim_vf(j)%sf(i,n+1,k)
+                    end do
+                end do
+            end do
+
+            if (p > 0) then
+                do k = 1, sys_size
+                    do j = 0, n
+                        do i = 0, m
+                            bc_buffers(2,-1)%sf(i,j,k) = q_prim_vf(j)%sf(i,j,-1)
+                            bc_buffers(2,1)%sf(i,j,k) = q_prim_vf(j)%sf(i,n,p+1)
+                        end do
+                    end do
+                end do
+
+            end if
+
+        end if
+
+    end subroutine s_pack_boundary_condition_buffers
+
+    subroutine s_finalize_boundary_conditions_module()
+
+        deallocate(bc_buffers(1, -1)%sf)
+        deallocate(bc_buffers(1, 1)%sf)
+        if (n > 0) then
+            deallocate(bc_buffers(2,-1)%sf)
+            deallocate(bc_buffers(2,1)%sf)
+            if (p > 0) then
+                deallocate(bc_buffers(3,-1)%sf)
+                deallocate(bc_buffers(3,1)%sf)
+            end if
+        end if
+
+        allocate(bc_buffers)
+
+    end subroutine s_finalize_boundary_conditions_module
 
 end module m_boundary_conditions

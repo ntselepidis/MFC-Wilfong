@@ -367,7 +367,7 @@ contains
             end if
 
 
-            if(.not. viscous) then 
+            if(.not. viscous) then
                 do i = 1, num_dims
                     @:ALLOCATE(dqL_prim_dx_n(i)%vf(1:sys_size))
                     @:ALLOCATE(dqL_prim_dy_n(i)%vf(1:sys_size))
@@ -619,11 +619,12 @@ contains
 
     end subroutine s_initialize_rhs_module
 
-    subroutine s_compute_rhs(q_cons_vf, q_T_sf, q_prim_vf, rhs_vf, pb, rhs_pb, mv, rhs_mv, t_step, time_avg)
+    subroutine s_compute_rhs(q_cons_vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb, rhs_pb, mv, rhs_mv, t_step, time_avg)
 
         type(scalar_field), dimension(sys_size), intent(inout) :: q_cons_vf
         type(scalar_field), intent(inout) :: q_T_sf
         type(scalar_field), dimension(sys_size), intent(inout) :: q_prim_vf
+        type(integer_field), dimension(1:num_dims, -1:1), intent(in) :: bc_type
         type(scalar_field), dimension(sys_size), intent(inout) :: rhs_vf
         real(wp), dimension(startx:, starty:, startz:, 1:, 1:), intent(inout) :: pb, rhs_pb
         real(wp), dimension(startx:, starty:, startz:, 1:, 1:), intent(inout) :: mv, rhs_mv
@@ -633,7 +634,7 @@ contains
         real(wp), dimension(0:m, 0:n, 0:p) :: nbub
         real(wp) :: t_start, t_finish
         integer :: i, j, k, l, id !< Generic loop iterators
-        
+
         call nvtxStartRange("COMPUTE-RHS")
 
         call cpu_time(t_start)
@@ -682,7 +683,7 @@ contains
         call nvtxEndRange
 
         call nvtxStartRange("RHS-COMMUNICATION")
-        call s_populate_variables_buffers(q_prim_qp%vf, pb, mv)
+        call s_populate_variables_buffers(q_prim_qp%vf, pb, mv, bc_type)
         call nvtxEndRange
 
         call nvtxStartRange("RHS-ELASTIC")
@@ -844,25 +845,25 @@ contains
                                       id, irx, iry, irz)
                 call nvtxEndRange
 
-                if(riemann_solver == 4) then 
-                    if(id == 1) then 
-                        call s_igr_riemann_solver_alt(flux_n(id)%vf, flux_src_n(id)%vf, id, qL_rsx_vf, qR_rsx_vf, & 
+                if(riemann_solver == 4) then
+                    if(id == 1) then
+                        call s_igr_riemann_solver_alt(flux_n(id)%vf, flux_src_n(id)%vf, id, qL_rsx_vf, qR_rsx_vf, &
                             dqL_prim_dx_n(id)%vf(momxb)%sf,dqL_prim_dy_n(id)%vf(momxb)%sf,dqL_prim_dz_n(id)%vf(momxb)%sf, &
                             dqL_prim_dx_n(id)%vf(momxb+1)%sf,dqL_prim_dy_n(id)%vf(momxb+1)%sf,dqL_prim_dz_n(id)%vf(momxb+1)%sf, &
                             dqL_prim_dx_n(id)%vf(momxe)%sf,dqL_prim_dy_n(id)%vf(momxe)%sf,dqL_prim_dz_n(id)%vf(momxe)%sf, &
                             dqR_prim_dx_n(id)%vf(momxb)%sf,dqR_prim_dy_n(id)%vf(momxb)%sf,dqR_prim_dz_n(id)%vf(momxb)%sf, &
                             dqR_prim_dx_n(id)%vf(momxb+1)%sf,dqR_prim_dy_n(id)%vf(momxb+1)%sf,dqR_prim_dz_n(id)%vf(momxb+1)%sf, &
                             dqR_prim_dx_n(id)%vf(momxe)%sf,dqR_prim_dy_n(id)%vf(momxe)%sf,dqR_prim_dz_n(id)%vf(momxe)%sf)
-                    else if(id == 2) then 
-                        call s_igr_riemann_solver_alt(flux_n(id)%vf, flux_src_n(id)%vf, id, qL_rsy_vf, qR_rsy_vf, & 
+                    else if(id == 2) then
+                        call s_igr_riemann_solver_alt(flux_n(id)%vf, flux_src_n(id)%vf, id, qL_rsy_vf, qR_rsy_vf, &
                             dqL_prim_dx_n(id)%vf(momxb)%sf,dqL_prim_dy_n(id)%vf(momxb)%sf,dqL_prim_dz_n(id)%vf(momxb)%sf, &
                             dqL_prim_dx_n(id)%vf(momxb+1)%sf,dqL_prim_dy_n(id)%vf(momxb+1)%sf,dqL_prim_dz_n(id)%vf(momxb+1)%sf, &
                             dqL_prim_dx_n(id)%vf(momxe)%sf,dqL_prim_dy_n(id)%vf(momxe)%sf,dqL_prim_dz_n(id)%vf(momxe)%sf, &
                             dqR_prim_dx_n(id)%vf(momxb)%sf,dqR_prim_dy_n(id)%vf(momxb)%sf,dqR_prim_dz_n(id)%vf(momxb)%sf, &
                             dqR_prim_dx_n(id)%vf(momxb+1)%sf,dqR_prim_dy_n(id)%vf(momxb+1)%sf,dqR_prim_dz_n(id)%vf(momxb+1)%sf, &
                             dqR_prim_dx_n(id)%vf(momxe)%sf,dqR_prim_dy_n(id)%vf(momxe)%sf,dqR_prim_dz_n(id)%vf(momxe)%sf)
-                    else if(id == 3) then 
-                        call s_igr_riemann_solver_alt(flux_n(id)%vf,flux_src_n(id)%vf, id,  qL_rsz_vf, qR_rsz_vf, & 
+                    else if(id == 3) then
+                        call s_igr_riemann_solver_alt(flux_n(id)%vf,flux_src_n(id)%vf, id,  qL_rsz_vf, qR_rsz_vf, &
                             dqL_prim_dx_n(id)%vf(momxb)%sf,dqL_prim_dy_n(id)%vf(momxb)%sf,dqL_prim_dz_n(id)%vf(momxb)%sf, &
                             dqL_prim_dx_n(id)%vf(momxb+1)%sf,dqL_prim_dy_n(id)%vf(momxb+1)%sf,dqL_prim_dz_n(id)%vf(momxb+1)%sf, &
                             dqL_prim_dx_n(id)%vf(momxe)%sf,dqL_prim_dy_n(id)%vf(momxe)%sf,dqL_prim_dz_n(id)%vf(momxe)%sf, &
@@ -997,7 +998,7 @@ contains
         end if
 
         call nvtxEndRange
-    
+
     end subroutine s_compute_rhs
 
     subroutine s_compute_advection_source_term(idir, rhs_vf, q_cons_vf, q_prim_vf, flux_src_n_vf)

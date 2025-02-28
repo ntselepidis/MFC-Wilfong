@@ -845,7 +845,7 @@ contains
             call s_infinite_relaxation_k(q_cons_vf)
         end if
 
-        call s_write_data_files(q_cons_vf, ib_markers, levelset, levelset_norm)
+        call s_write_data_files(q_cons_vf, q_prim_vf, ib_markers, levelset, levelset_norm, bc_type)
 
         call cpu_time(finish)
     end subroutine s_apply_initial_condition

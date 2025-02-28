@@ -3,6 +3,7 @@
 !! @brief Contains module m_boundary_conditions
 
 #:include 'macros.fpp'
+#:include 'inline_boundary_conditions.fpp'
 
 !> @brief The purpose of the module is to apply noncharacteristic and processor
 !! boundary condiitons
@@ -20,315 +21,284 @@ module m_boundary_conditions
 
     implicit none
 
-    type(scalar_field), dimension(:,:), allocatable :: buff_vals
-    type(scalar_field), dimension(:), allocatable :: q_prim_vf
-    !$acc declare create(buff_vals, q_prim_vf)
+    type(scalar_field), dimension(:,:), allocatable :: bc_buffers
+    !$acc declare create(bc_buffers)
+
+    integer :: bcxb, bcxe, bcyb, bcye, bczb, bcze
 
     private; public :: s_populate_variables_buffers, &
               s_populate_capillary_buffers, &
-              s_initialize_boundary_conditions_module
+              s_initialize_boundary_conditions_module, &
+              s_read_boundary_condition_files
 
 contains
 
-    subroutine s_initialize_boundary_conditions_module(q_cons_vf)
+    subroutine s_initialize_boundary_conditions_module()
 
-        type(scalar_field), dimension(sys_size) :: q_cons_vf
-        type(vector_field) :: gm_alpha_qp
-        type(scalar_field) :: q_T_sf !<
+        bcxb = bc_x%beg; bcxe = bc_x%end; bcyb = bc_y%beg; bcye = bc_y%end; bczb = bc_z%beg; bcze = bc_z%end
 
-        integer :: i, j, k, l
+        @:ALLOCATE(bc_buffers(1:num_dims, -1:1))
 
-        @:ALLOCATE(q_prim_vf(1:sys_size))
-        do i = 1, sys_size
-            @:ALLOCATE(q_prim_vf(i)%sf(idwbuff(1)%beg:idwbuff(1)%end, idwbuff(2)%beg:idwbuff(2)%end, idwbuff(3)%beg:idwbuff(3)%end))
-        end do
-
-        call s_convert_conservative_to_primitive_variables( &
-            q_cons_vf, &
-            q_T_sf, &
-            q_prim_vf, &
-            idwint, &
-            gm_alpha_qp%vf)
-
-        @:ALLOCATE(buff_vals(1:num_dims,-1:1))
-
-        if (bc_x%b_extrap_ic .and. bc_x%beg == -3) then
-            @:ALLOCATE(buff_vals(1,-1)%sf(1:sys_size,0:n,0:p))
-            !$acc parallel loop collapse(3) gang vector default(present)
-            do i = 1, sys_size
-                do l = 0, p
-                    do k = 0, n
-                            buff_vals(1,-1)%sf(i, k, l) = &
-                                q_prim_vf(i)%sf(0, k, l)
-                    end do
-                end do
-            end do
-        end if
-
-        if (bc_x%e_extrap_ic .and. bc_x%end == -3) then
-            @:ALLOCATE(buff_vals(1,1)%sf(1:sys_size,0:n,0:p))
-            !$acc parallel loop collapse(3) gang vector default(present)
-            do i = 1, sys_size
-                do l = 0, p
-                    do k = 0, n
-                        buff_vals(1,1)%sf(i, k, l) = &
-                            q_prim_vf(i)%sf(m, k, l)
-                    end do
-                end do
-            end do
-        end if
-
-        if (bc_y%b_extrap_ic .and. bc_y%beg == -3) then
-            @:ALLOCATE(buff_vals(2,-1)%sf(-buff_size:m+buff_size,1:sys_size,0:p))
-            !$acc parallel loop collapse(3) gang vector default(present)
-            do i = 1, sys_size
-                do k = 0, p
-                        do l = -buff_size, m + buff_size
-                            buff_vals(2,-1)%sf(l, i, k) = &
-                                q_prim_vf(i)%sf(l, 0, k)
-                        end do
-                end do
-            end do
-        end if
-
-        if (bc_y%e_extrap_ic .and. bc_y%end == -3) then
-            @:ALLOCATE(buff_vals(2,1)%sf(-buff_size:m+buff_size,1:sys_size,0:p))
-            !$acc parallel loop collapse(3) gang vector default(present)
-            do i = 1, sys_size
-                do k = 0, p
-                    do l = -buff_size, m + buff_size
-                        buff_vals(2,1)%sf(l, i, k) = &
-                            q_prim_vf(i)%sf(l, n, k)
-                    end do
-                end do
-            end do
-        end if
-
-        if (p > 0) then
-            if (bc_z%b_extrap_ic .and. bc_z%beg == -3) then
-                @:ALLOCATE(buff_vals(3,-1)%sf(-buff_size:m+buff_size,-buff_size:n+buff_size,1:sys_size))
-                !$acc parallel loop collapse(3) gang vector default(present)
-                do i = 1, sys_size
-                    do l = -buff_size, n + buff_size
-                        do k = -buff_size, m + buff_size
-                            buff_vals(3,-1)%sf(k, l, i) = &
-                                q_prim_vf(i)%sf(k, l, 0)
-                        end do
-                    end do
-                end do
-            end if
-
-            if (bc_z%e_extrap_ic .and. bc_z%end == -3) then
-                @:ALLOCATE(buff_vals(3,1)%sf(0:m,0:n,1:sys_size))
-                !$acc parallel loop collapse(3) gang vector default(present)
-                do i = 1, sys_size
-                        do l = -buff_size, n + buff_size
-                            do k = -buff_size, m + buff_size
-                                buff_vals(3,1)%sf(k, l, i) = &
-                                    q_prim_vf(i)%sf(k, l, p)
-                            end do
-                        end do
-                end do
+        @:ALLOCATE(bc_buffers(1, -1)%sf(1:sys_size, 0:n, 0:p))
+        @:ALLOCATE(bc_buffers(1, 1)%sf(1:sys_size, 0:n, 0:p))
+        @:ACC_SETUP_SFs(bc_buffers(1,-1), bc_buffers(1,1))
+        if (n > 0) then
+            @:ALLOCATE(bc_buffers(2,-1)%sf(0:m,1:sys_size,0:p))
+            @:ALLOCATE(bc_buffers(2,1)%sf(0:m,1:sys_size,0:p))
+            @:ACC_SETUP_SFs(bc_buffers(2,-1), bc_buffers(2,1))
+            if (p > 0) then
+                @:ALLOCATE(bc_buffers(3,-1)%sf(0:m,0:n,1:sys_size))
+                @:ALLOCATE(bc_buffers(3,1)%sf(0:m,0:n,1:sys_size))
+                @:ACC_SETUP_SFs(bc_buffers(3,-1), bc_buffers(3,1))
             end if
         end if
-
-        do i = 1, sys_size
-            @:DEALLOCATE(q_prim_vf(i)%sf)
-        end do
-        @:DEALLOCATE(q_prim_vf)
-
 
     end subroutine s_initialize_boundary_conditions_module
+
+    subroutine s_populate_variables_buffers(q_prim_vf, pb, mv, bc_type)
+
+        type(scalar_field), dimension(sys_size), intent(inout) :: q_prim_vf
+        type(integer_field), dimension(1:num_dims, -1:1), intent(in) :: bc_type
+        real(wp), dimension(startx:, starty:, startz:, 1:, 1:), intent(inout) :: pb, mv
+
+        integer :: i, j, k, l, q
+
+        !< x-direction
+        if (bcxb >= 0) then
+            call s_mpi_sendrecv_variables_buffers(q_prim_vf, pb, mv, 1, -1)
+        else
+            !$acc parallel loop collapse(2) gang vector default(present)
+            do l = 0, p
+                do k = 0, n
+                    if (bc_type(1,-1)%sf(0,k,l) >= -13 .and. bc_type(1,-1)%sf(0,k,l) <= -3) then
+                        @:GHOST_CELL_EXTRAPOLATION_BC(1,-1)
+                    elseif (bc_type(1,-1)%sf(0,k,l) == -2) then
+                        !@:SYMMETRY_BC(DIR=1, LOC=-1)
+                    elseif (bc_type(1,-1)%sf(0,k,l) == -1) then
+                        !@:PERIODIC_BC(DIR=1, LOC=-1)
+                    elseif (bc_type(1,-1)%sf(0,k,l) == -15) then
+                        !@:SLIP_WALL_BC(DIR=1, LOC=-1)
+                    elseif (bc_type(1,-1)%sf(0,k,l) == -16) then
+                        !@:NO_SLIP_WALL_BC(DIR=1, LOC=-1)
+                    elseif (bc_type(1,-1)%sf(0,k,l) == -17) then
+                        !@:DIRICHLET_BC(DIR=1, LOC=-1)
+                    end if
+                end do
+            end do
+        end if
+
+        if (bcxe >= 0) then
+            call s_mpi_sendrecv_variables_buffers(q_prim_vf, pb, mv, 1, -1)
+        else
+            !$acc parallel loop collapse(2) gang vector default(present)
+            do l = 0, p
+                do k = 0, n
+                    if (bc_type(1,1)%sf(0,k,l) >= -13 .and. bc_type(1,-1)%sf(0,k,l) <= -3) then
+                        @:GHOST_CELL_EXTRAPOLATION_BC(1,1)
+                    elseif (bc_type(1,-1)%sf(0,k,l) == -2) then
+
+                    elseif (bc_type(1,-1)%sf(0,k,l) == -1) then
+
+                    elseif (bc_type(1,-1)%sf(0,k,l) == -15) then
+
+                    elseif (bc_type(1,-1)%sf(0,k,l) == -16) then
+
+                    end if
+                end do
+            end do
+        end if
+
+    end subroutine s_populate_variables_buffers
 
     !>  The purpose of this procedure is to populate the buffers
     !!      of the primitive variables, depending on the selected
     !!      boundary conditions.
-    subroutine s_populate_variables_buffers(q_prim_vf, pb, mv)
+    !subroutine s_populate_variables_buffers(q_prim_vf, pb, mv)
 
-        type(scalar_field), dimension(sys_size), intent(inout) :: q_prim_vf
-        real(wp), dimension(startx:, starty:, startz:, 1:, 1:), intent(inout) :: pb, mv
+        !type(scalar_field), dimension(sys_size), intent(inout) :: q_prim_vf
+        !real(wp), dimension(startx:, starty:, startz:, 1:, 1:), intent(inout) :: pb, mv
 
-        integer :: bc_loc, bc_dir
+        !integer :: bc_loc, bc_dir
 
-        ! Population of Buffers in x-direction
+        !! Population of Buffers in x-direction
 
-        select case (bc_x%beg)
-        case (-13:-3) ! Ghost-cell extrap. BC at beginning
-            call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 1, -1)
-        case (-2)     ! Symmetry BC at beginning
-            call s_symmetry(q_prim_vf, pb, mv, 1, -1)
-        case (-1)     ! Periodic BC at beginning
-            call s_periodic(q_prim_vf, pb, mv, 1, -1)
-        case (-15)    ! Slip wall BC at beginning
-            call s_slip_wall(q_prim_vf, pb, mv, 1, -1)
-        case (-16)    ! No-slip wall BC at beginning
-            call s_no_slip_wall(q_prim_vf, pb, mv, 1, -1)
-        case default ! Processor BC at beginning
-            call s_mpi_sendrecv_variables_buffers( &
-                q_prim_vf, pb, mv, 1, -1)
-        end select
+        !select case (bc_x%beg)
+        !case (-13:-3) ! Ghost-cell extrap. BC at beginning
+            !call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 1, -1)
+        !case (-2)     ! Symmetry BC at beginning
+            !call s_symmetry(q_prim_vf, pb, mv, 1, -1)
+        !case (-1)     ! Periodic BC at beginning
+            !call s_periodic(q_prim_vf, pb, mv, 1, -1)
+        !case (-15)    ! Slip wall BC at beginning
+            !call s_slip_wall(q_prim_vf, pb, mv, 1, -1)
+        !case (-16)    ! No-slip wall BC at beginning
+            !call s_no_slip_wall(q_prim_vf, pb, mv, 1, -1)
+        !case default ! Processor BC at beginning
+            !call s_mpi_sendrecv_variables_buffers( &
+                !q_prim_vf, pb, mv, 1, -1)
+        !end select
 
-        select case (bc_x%end)
-        case (-13:-3) ! Ghost-cell extrap. BC at end
-            call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 1, 1)
-        case (-2)     ! Symmetry BC at end
-            call s_symmetry(q_prim_vf, pb, mv, 1, 1)
-        case (-1)     ! Periodic BC at end
-            call s_periodic(q_prim_vf, pb, mv, 1, 1)
-        case (-15)    ! Slip wall BC at end
-            call s_slip_wall(q_prim_vf, pb, mv, 1, 1)
-        case (-16)    ! No-slip wall bc at end
-            call s_no_slip_wall(q_prim_vf, pb, mv, 1, 1)
-        case default ! Processor BC at end
-            call s_mpi_sendrecv_variables_buffers( &
-                q_prim_vf, pb, mv, 1, 1)
-        end select
+        !select case (bc_x%end)
+        !case (-13:-3) ! Ghost-cell extrap. BC at end
+            !call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 1, 1)
+        !case (-2)     ! Symmetry BC at end
+            !call s_symmetry(q_prim_vf, pb, mv, 1, 1)
+        !case (-1)     ! Periodic BC at end
+            !call s_periodic(q_prim_vf, pb, mv, 1, 1)
+        !case (-15)    ! Slip wall BC at end
+            !call s_slip_wall(q_prim_vf, pb, mv, 1, 1)
+        !case (-16)    ! No-slip wall bc at end
+            !call s_no_slip_wall(q_prim_vf, pb, mv, 1, 1)
+        !case default ! Processor BC at end
+            !call s_mpi_sendrecv_variables_buffers( &
+                !q_prim_vf, pb, mv, 1, 1)
+        !end select
 
-        if (qbmm .and. .not. polytropic) then
-            select case (bc_x%beg)
-            case (-13:-3) ! Ghost-cell extrap. BC at beginning
-                call s_qbmm_extrapolation(pb, mv, 1, -1)
-            case (-15)    ! Slip wall BC at beginning
-                call s_qbmm_extrapolation(pb, mv, 1, -1)
-            case (-16)    ! No-slip wall BC at beginning
-                call s_qbmm_extrapolation(pb, mv, 1, -1)
-            end select
+        !if (qbmm .and. .not. polytropic) then
+            !select case (bc_x%beg)
+            !case (-13:-3) ! Ghost-cell extrap. BC at beginning
+                !call s_qbmm_extrapolation(pb, mv, 1, -1)
+            !case (-15)    ! Slip wall BC at beginning
+                !call s_qbmm_extrapolation(pb, mv, 1, -1)
+            !case (-16)    ! No-slip wall BC at beginning
+                !call s_qbmm_extrapolation(pb, mv, 1, -1)
+            !end select
 
-            select case (bc_x%end)
-            case (-13:-3) ! Ghost-cell extrap. BC at end
-                call s_qbmm_extrapolation(pb, mv, 1, 1)
-            case (-15)    ! Slip wall BC at end
-                call s_qbmm_extrapolation(pb, mv, 1, 1)
-            case (-16)    ! No-slip wall bc at end
-                call s_qbmm_extrapolation(pb, mv, 1, 1)
-            end select
-        end if
+            !select case (bc_x%end)
+            !case (-13:-3) ! Ghost-cell extrap. BC at end
+                !call s_qbmm_extrapolation(pb, mv, 1, 1)
+            !case (-15)    ! Slip wall BC at end
+                !call s_qbmm_extrapolation(pb, mv, 1, 1)
+            !case (-16)    ! No-slip wall bc at end
+                !call s_qbmm_extrapolation(pb, mv, 1, 1)
+            !end select
+        !end if
 
-        ! END: Population of Buffers in x-direction
+        !! END: Population of Buffers in x-direction
 
-        ! Population of Buffers in y-direction
+        !! Population of Buffers in y-direction
 
-        if (n == 0) return
+        !if (n == 0) return
 
-        select case (bc_y%beg)
-        case (-13:-3) ! Ghost-cell extrap. BC at beginning
-            call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 2, -1)
-        case (-14)    ! Axis BC at beginning
-            call s_axis(q_prim_vf, pb, mv, 2, -1)
-        case (-2)     ! Symmetry BC at beginning
-            call s_symmetry(q_prim_vf, pb, mv, 2, -1)
-        case (-1)     ! Periodic BC at beginning
-            call s_periodic(q_prim_vf, pb, mv, 2, -1)
-        case (-15)    ! Slip wall BC at beginning
-            call s_slip_wall(q_prim_vf, pb, mv, 2, -1)
-        case (-16)    ! No-slip wall BC at beginning
-            call s_no_slip_wall(q_prim_vf, pb, mv, 2, -1)
-        case default ! Processor BC at beginning
-            call s_mpi_sendrecv_variables_buffers( &
-                q_prim_vf, pb, mv, 2, -1)
-        end select
+        !select case (bc_y%beg)
+        !case (-13:-3) ! Ghost-cell extrap. BC at beginning
+            !call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 2, -1)
+        !case (-14)    ! Axis BC at beginning
+            !call s_axis(q_prim_vf, pb, mv, 2, -1)
+        !case (-2)     ! Symmetry BC at beginning
+            !call s_symmetry(q_prim_vf, pb, mv, 2, -1)
+        !case (-1)     ! Periodic BC at beginning
+            !call s_periodic(q_prim_vf, pb, mv, 2, -1)
+        !case (-15)    ! Slip wall BC at beginning
+            !call s_slip_wall(q_prim_vf, pb, mv, 2, -1)
+        !case (-16)    ! No-slip wall BC at beginning
+            !call s_no_slip_wall(q_prim_vf, pb, mv, 2, -1)
+        !case default ! Processor BC at beginning
+            !call s_mpi_sendrecv_variables_buffers( &
+                !q_prim_vf, pb, mv, 2, -1)
+        !end select
 
-        select case (bc_y%end)
-        case (-13:-3) ! Ghost-cell extrap. BC at end
-            call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 2, 1)
-        case (-2)     ! Symmetry BC at end
-            call s_symmetry(q_prim_vf, pb, mv, 2, 1)
-        case (-1)     ! Periodic BC at end
-            call s_periodic(q_prim_vf, pb, mv, 2, 1)
-        case (-15)    ! Slip wall BC at end
-            call s_slip_wall(q_prim_vf, pb, mv, 2, 1)
-        case (-16)    ! No-slip wall BC at end
-            call s_no_slip_wall(q_prim_vf, pb, mv, 2, 1)
-        case default ! Processor BC at end
-            call s_mpi_sendrecv_variables_buffers( &
-                q_prim_vf, pb, mv, 2, 1)
-        end select
+        !select case (bc_y%end)
+        !case (-13:-3) ! Ghost-cell extrap. BC at end
+            !call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 2, 1)
+        !case (-2)     ! Symmetry BC at end
+            !call s_symmetry(q_prim_vf, pb, mv, 2, 1)
+        !case (-1)     ! Periodic BC at end
+            !call s_periodic(q_prim_vf, pb, mv, 2, 1)
+        !case (-15)    ! Slip wall BC at end
+            !call s_slip_wall(q_prim_vf, pb, mv, 2, 1)
+        !case (-16)    ! No-slip wall BC at end
+            !call s_no_slip_wall(q_prim_vf, pb, mv, 2, 1)
+        !case default ! Processor BC at end
+            !call s_mpi_sendrecv_variables_buffers( &
+                !q_prim_vf, pb, mv, 2, 1)
+        !end select
 
-        if (qbmm .and. .not. polytropic) then
+        !if (qbmm .and. .not. polytropic) then
 
-            select case (bc_y%beg)
-            case (-13:-3) ! Ghost-cell extrap. BC at beginning
-                call s_qbmm_extrapolation(pb, mv, 2, -1)
-            case (-15)    ! Slip wall BC at beginning
-                call s_qbmm_extrapolation(pb, mv, 2, -1)
-            case (-16)    ! No-slip wall BC at beginning
-                call s_qbmm_extrapolation(pb, mv, 2, -1)
-            end select
+            !select case (bc_y%beg)
+            !case (-13:-3) ! Ghost-cell extrap. BC at beginning
+                !call s_qbmm_extrapolation(pb, mv, 2, -1)
+            !case (-15)    ! Slip wall BC at beginning
+                !call s_qbmm_extrapolation(pb, mv, 2, -1)
+            !case (-16)    ! No-slip wall BC at beginning
+                !call s_qbmm_extrapolation(pb, mv, 2, -1)
+            !end select
 
-            select case (bc_y%end)
-            case (-13:-3) ! Ghost-cell extrap. BC at end
-                call s_qbmm_extrapolation(pb, mv, 2, 1)
-            case (-15)    ! Slip wall BC at end
-                call s_qbmm_extrapolation(pb, mv, 2, 1)
-            case (-16)    ! No-slip wall BC at end
-                call s_qbmm_extrapolation(pb, mv, 2, 1)
-            end select
+            !select case (bc_y%end)
+            !case (-13:-3) ! Ghost-cell extrap. BC at end
+                !call s_qbmm_extrapolation(pb, mv, 2, 1)
+            !case (-15)    ! Slip wall BC at end
+                !call s_qbmm_extrapolation(pb, mv, 2, 1)
+            !case (-16)    ! No-slip wall BC at end
+                !call s_qbmm_extrapolation(pb, mv, 2, 1)
+            !end select
 
-        end if
+        !end if
 
-        ! END: Population of Buffers in y-direction
+        !! END: Population of Buffers in y-direction
 
-        ! Population of Buffers in z-direction
+        !! Population of Buffers in z-direction
 
-        if (p == 0) return
+        !if (p == 0) return
 
-        select case (bc_z%beg)
-        case (-13:-3) ! Ghost-cell extrap. BC at beginning
-            call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 3, -1)
-        case (-2)     ! Symmetry BC at beginning
-            call s_symmetry(q_prim_vf, pb, mv, 3, -1)
-        case (-1)     ! Periodic BC at beginning
-            call s_periodic(q_prim_vf, pb, mv, 3, -1)
-        case (-15)    ! Slip wall BC at beginning
-            call s_slip_wall(q_prim_vf, pb, mv, 3, -1)
-        case (-16)    ! No-slip wall BC at beginning
-            call s_no_slip_wall(q_prim_vf, pb, mv, 3, -1)
-        case default ! Processor BC at beginning
-            call s_mpi_sendrecv_variables_buffers( &
-                q_prim_vf, pb, mv, 3, -1)
-        end select
+        !select case (bc_z%beg)
+        !case (-13:-3) ! Ghost-cell extrap. BC at beginning
+            !call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 3, -1)
+        !case (-2)     ! Symmetry BC at beginning
+            !call s_symmetry(q_prim_vf, pb, mv, 3, -1)
+        !case (-1)     ! Periodic BC at beginning
+            !call s_periodic(q_prim_vf, pb, mv, 3, -1)
+        !case (-15)    ! Slip wall BC at beginning
+            !call s_slip_wall(q_prim_vf, pb, mv, 3, -1)
+        !case (-16)    ! No-slip wall BC at beginning
+            !call s_no_slip_wall(q_prim_vf, pb, mv, 3, -1)
+        !case default ! Processor BC at beginning
+            !call s_mpi_sendrecv_variables_buffers( &
+                !q_prim_vf, pb, mv, 3, -1)
+        !end select
 
-        select case (bc_z%end)
-        case (-13:-3) ! Ghost-cell extrap. BC at end
-            call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 3, 1)
-        case (-2)     ! Symmetry BC at end
-            call s_symmetry(q_prim_vf, pb, mv, 3, 1)
-        case (-1)     ! Periodic BC at end
-            call s_periodic(q_prim_vf, pb, mv, 3, 1)
-        case (-15)    ! Slip wall BC at end
-            call s_slip_wall(q_prim_vf, pb, mv, 3, 1)
-        case (-16)    ! No-slip wall BC at end
-            call s_no_slip_wall(q_prim_vf, pb, mv, 3, 1)
-        case default ! Processor BC at end
-            call s_mpi_sendrecv_variables_buffers( &
-                q_prim_vf, pb, mv, 3, 1)
-        end select
+        !select case (bc_z%end)
+        !case (-13:-3) ! Ghost-cell extrap. BC at end
+            !call s_ghost_cell_extrapolation(q_prim_vf, pb, mv, 3, 1)
+        !case (-2)     ! Symmetry BC at end
+            !call s_symmetry(q_prim_vf, pb, mv, 3, 1)
+        !case (-1)     ! Periodic BC at end
+            !call s_periodic(q_prim_vf, pb, mv, 3, 1)
+        !case (-15)    ! Slip wall BC at end
+            !call s_slip_wall(q_prim_vf, pb, mv, 3, 1)
+        !case (-16)    ! No-slip wall BC at end
+            !call s_no_slip_wall(q_prim_vf, pb, mv, 3, 1)
+        !case default ! Processor BC at end
+            !call s_mpi_sendrecv_variables_buffers( &
+                !q_prim_vf, pb, mv, 3, 1)
+        !end select
 
-        if (qbmm .and. .not. polytropic) then
+        !if (qbmm .and. .not. polytropic) then
 
-            select case (bc_z%beg)
-            case (-13:-3) ! Ghost-cell extrap. BC at beginning
-                call s_qbmm_extrapolation(pb, mv, 3, -1)
-            case (-15)    ! Slip wall BC at beginning
-                call s_qbmm_extrapolation(pb, mv, 3, -1)
-            case (-16)    ! No-slip wall BC at beginning
-                call s_qbmm_extrapolation(pb, mv, 3, -1)
-            end select
+            !select case (bc_z%beg)
+            !case (-13:-3) ! Ghost-cell extrap. BC at beginning
+                !call s_qbmm_extrapolation(pb, mv, 3, -1)
+            !case (-15)    ! Slip wall BC at beginning
+                !call s_qbmm_extrapolation(pb, mv, 3, -1)
+            !case (-16)    ! No-slip wall BC at beginning
+                !call s_qbmm_extrapolation(pb, mv, 3, -1)
+            !end select
 
-            select case (bc_z%end)
-            case (-13:-3) ! Ghost-cell extrap. BC at end
-                call s_qbmm_extrapolation(pb, mv, 3, 1)
-            case (-15)    ! Slip wall BC at end
-                call s_qbmm_extrapolation(pb, mv, 3, 1)
-            case (-16)    ! No-slip wall BC at end
-                call s_qbmm_extrapolation(pb, mv, 3, 1)
-            end select
+            !select case (bc_z%end)
+            !case (-13:-3) ! Ghost-cell extrap. BC at end
+                !call s_qbmm_extrapolation(pb, mv, 3, 1)
+            !case (-15)    ! Slip wall BC at end
+                !call s_qbmm_extrapolation(pb, mv, 3, 1)
+            !case (-16)    ! No-slip wall BC at end
+                !call s_qbmm_extrapolation(pb, mv, 3, 1)
+            !end select
 
-        end if
+        !end if
 
-        ! END: Population of Buffers in z-direction
+        !! END: Population of Buffers in z-direction
 
-    end subroutine s_populate_variables_buffers
+    !end subroutine s_populate_variables_buffers
 
     subroutine s_ghost_cell_extrapolation(q_prim_vf, pb, mv, bc_dir, bc_loc)
 
@@ -337,190 +307,190 @@ contains
         integer, intent(in) :: bc_dir, bc_loc
         integer :: j, k, l, q, i
 
-        !< x-direction
-        if (bc_dir == 1) then !< x-direction
+        !!< x-direction
+        !if (bc_dir == 1) then !< x-direction
 
-            if (bc_loc == -1) then !bc_x%beg
+            !if (bc_loc == -1) then !bc_x%beg
 
-                if (bc_x%b_extrap_ic) then
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do l = 0, p
-                            do k = 0, n
-                                do j = 1, buff_size
-                                    q_prim_vf(i)%sf(-j, k, l) = &
-                                        buff_vals(1,-1)%sf(i,k,l)
-                                end do
-                            end do
-                        end do
-                    end do
-                else
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do l = 0, p
-                            do k = 0, n
-                                do j = 1, buff_size
-                                    q_prim_vf(i)%sf(-j, k, l) = &
-                                        q_prim_vf(i)%sf(0, k, l)
-                                end do
-                            end do
-                        end do
-                    end do
-                end if
+                !if (bc_x%b_extrap_ic) then
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do l = 0, p
+                            !do k = 0, n
+                                !do j = 1, buff_size
+                                    !q_prim_vf(i)%sf(-j, k, l) = &
+                                        !buff_vals(1,-1)%sf(i,k,l)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !else
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do l = 0, p
+                            !do k = 0, n
+                                !do j = 1, buff_size
+                                    !q_prim_vf(i)%sf(-j, k, l) = &
+                                        !q_prim_vf(i)%sf(0, k, l)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !end if
 
-            else !< bc_x%end
+            !else !< bc_x%end
 
-                if (bc_x%e_extrap_ic) then
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do l = 0, p
-                            do k = 0, n
-                                do j = 1, buff_size
-                                    q_prim_vf(i)%sf(m + j, k, l) = &
-                                        buff_vals(1,1)%sf(i,k,l)
-                                end do
-                            end do
-                        end do
-                    end do
-                else
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do l = 0, p
-                            do k = 0, n
-                                do j = 1, buff_size
-                                    q_prim_vf(i)%sf(m + j, k, l) = &
-                                        q_prim_vf(i)%sf(m, k, l)
-                                end do
-                            end do
-                        end do
-                    end do
-                end if
+                !if (bc_x%e_extrap_ic) then
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do l = 0, p
+                            !do k = 0, n
+                                !do j = 1, buff_size
+                                    !q_prim_vf(i)%sf(m + j, k, l) = &
+                                        !buff_vals(1,1)%sf(i,k,l)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !else
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do l = 0, p
+                            !do k = 0, n
+                                !do j = 1, buff_size
+                                    !q_prim_vf(i)%sf(m + j, k, l) = &
+                                        !q_prim_vf(i)%sf(m, k, l)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !end if
 
-            end if
+            !end if
 
-            !< y-direction
-        elseif (bc_dir == 2) then !< y-direction
+            !!< y-direction
+        !elseif (bc_dir == 2) then !< y-direction
 
-            if (bc_loc == -1) then !< bc_y%beg
+            !if (bc_loc == -1) then !< bc_y%beg
 
-                if (bc_y%b_extrap_ic) then
-                    do i = 1, sys_size
-                        do k = 0, p
-                            do j = 1, buff_size
-                                do l = -buff_size, m + buff_size
-                                    q_prim_vf(i)%sf(l, -j, k) = &
-                                        buff_vals(2,-1)%sf(l, i, k)
-                                end do
-                            end do
-                        end do
-                    end do
+                !if (bc_y%b_extrap_ic) then
+                    !do i = 1, sys_size
+                        !do k = 0, p
+                            !do j = 1, buff_size
+                                !do l = -buff_size, m + buff_size
+                                    !q_prim_vf(i)%sf(l, -j, k) = &
+                                        !buff_vals(2,-1)%sf(l, i, k)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
 
-                else
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do k = 0, p
-                            do j = 1, buff_size
-                                do l = -buff_size, m + buff_size
-                                    q_prim_vf(i)%sf(l, -j, k) = &
-                                        q_prim_vf(i)%sf(l, 0, k)
-                                end do
-                            end do
-                        end do
-                    end do
-                end if
+                !else
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do k = 0, p
+                            !do j = 1, buff_size
+                                !do l = -buff_size, m + buff_size
+                                    !q_prim_vf(i)%sf(l, -j, k) = &
+                                        !q_prim_vf(i)%sf(l, 0, k)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !end if
 
-            else !< bc_y%end
+            !else !< bc_y%end
 
-                if (bc_y%e_extrap_ic) then
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do k = 0, p
-                            do j = 1, buff_size
-                                do l = -buff_size, m + buff_size
-                                    q_prim_vf(i)%sf(l, n + j, k) = &
-                                        buff_vals(2,1)%sf(l,i,k)
-                                end do
-                            end do
-                        end do
-                    end do
-                else
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do k = 0, p
-                            do j = 1, buff_size
-                                do l = -buff_size, m + buff_size
-                                    q_prim_vf(i)%sf(l, n + j, k) = &
-                                        q_prim_vf(i)%sf(l, n, k)
-                                end do
-                            end do
-                        end do
-                    end do
-                end if
+                !if (bc_y%e_extrap_ic) then
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do k = 0, p
+                            !do j = 1, buff_size
+                                !do l = -buff_size, m + buff_size
+                                    !q_prim_vf(i)%sf(l, n + j, k) = &
+                                        !buff_vals(2,1)%sf(l,i,k)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !else
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do k = 0, p
+                            !do j = 1, buff_size
+                                !do l = -buff_size, m + buff_size
+                                    !q_prim_vf(i)%sf(l, n + j, k) = &
+                                        !q_prim_vf(i)%sf(l, n, k)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !end if
 
-            end if
+            !end if
 
-            !< z-direction
-        elseif (bc_dir == 3) then !< z-direction
+            !!< z-direction
+        !elseif (bc_dir == 3) then !< z-direction
 
-            if (bc_loc == -1) then !< bc_z%beg
+            !if (bc_loc == -1) then !< bc_z%beg
 
-                if (bc_z%b_extrap_ic) then
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do j = 1, buff_size
-                            do l = -buff_size, n + buff_size
-                                do k = -buff_size, m + buff_size
-                                    q_prim_vf(i)%sf(k, l, -j) = &
-                                        buff_vals(3,-1)%sf(k,l,i)
-                                end do
-                            end do
-                        end do
-                    end do
-                else
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do j = 1, buff_size
-                            do l = -buff_size, n + buff_size
-                                do k = -buff_size, m + buff_size
-                                    q_prim_vf(i)%sf(k, l, -j) = &
-                                        q_prim_vf(i)%sf(k, l, 0)
-                                end do
-                            end do
-                        end do
-                    end do
-                end if
+                !if (bc_z%b_extrap_ic) then
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do j = 1, buff_size
+                            !do l = -buff_size, n + buff_size
+                                !do k = -buff_size, m + buff_size
+                                    !q_prim_vf(i)%sf(k, l, -j) = &
+                                        !buff_vals(3,-1)%sf(k,l,i)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !else
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do j = 1, buff_size
+                            !do l = -buff_size, n + buff_size
+                                !do k = -buff_size, m + buff_size
+                                    !q_prim_vf(i)%sf(k, l, -j) = &
+                                        !q_prim_vf(i)%sf(k, l, 0)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !end if
 
-            else !< bc_z%end
+            !else !< bc_z%end
 
-                if (bc_z%e_extrap_ic) then
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do j = 1, buff_size
-                            do l = -buff_size, n + buff_size
-                                do k = -buff_size, m + buff_size
-                                    q_prim_vf(i)%sf(k, l, p + j) = &
-                                        buff_vals(3,1)%sf(k,l,i)
-                                end do
-                            end do
-                        end do
-                    end do
-                else
-                    !$acc parallel loop collapse(4) gang vector default(present)
-                    do i = 1, sys_size
-                        do j = 1, buff_size
-                            do l = -buff_size, n + buff_size
-                                do k = -buff_size, m + buff_size
-                                    q_prim_vf(i)%sf(k, l, p + j) = &
-                                        q_prim_vf(i)%sf(k, l, p)
-                                end do
-                            end do
-                        end do
-                    end do
-                end if
+                !if (bc_z%e_extrap_ic) then
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do j = 1, buff_size
+                            !do l = -buff_size, n + buff_size
+                                !do k = -buff_size, m + buff_size
+                                    !q_prim_vf(i)%sf(k, l, p + j) = &
+                                        !buff_vals(3,1)%sf(k,l,i)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !else
+                    !!$acc parallel loop collapse(4) gang vector default(present)
+                    !do i = 1, sys_size
+                        !do j = 1, buff_size
+                            !do l = -buff_size, n + buff_size
+                                !do k = -buff_size, m + buff_size
+                                    !q_prim_vf(i)%sf(k, l, p + j) = &
+                                        !q_prim_vf(i)%sf(k, l, p)
+                                !end do
+                            !end do
+                        !end do
+                    !end do
+                !end if
 
-            end if
+            !end if
 
-        end if
+        !end if
 
     end subroutine s_ghost_cell_extrapolation
 
@@ -1861,5 +1831,121 @@ contains
         end if
 
     end subroutine s_populate_capillary_buffers
+
+    subroutine s_read_boundary_condition_files(step_dirpath, bc_type)
+
+        character(LEN=*), intent(in) :: step_dirpath
+
+        type(integer_field), dimension(1:num_dims,-1:1) :: bc_type
+
+        call s_read_boundary_condition_types(step_dirpath, bc_type)
+
+        call s_read_boundary_condition_buffers(step_dirpath)
+
+    end subroutine s_read_boundary_condition_files
+
+    subroutine s_read_boundary_condition_types(step_dirpath, bc_type)
+
+        character(LEN=*), intent(in) :: step_dirpath
+
+        type(integer_field), dimension(1:num_dims,-1:1) :: bc_type
+
+        integer :: dir, loc
+        logical :: file_exist
+        character(len=path_len) :: file_path
+
+        character(len=10) :: status
+
+#ifdef MFC_MPI
+        integer :: ierr
+        integer :: file_id
+        integer :: offset
+        character(len=7) :: proc_rank_str
+#endif
+
+        if (parallel_io .eqv. .false.) then
+            file_path = trim(step_dirpath)//'/bc_type.dat'
+        else
+#ifdef MFC_MPI
+
+#endif
+        end if
+
+        inquire (FILE=trim(file_path), EXIST=file_exist)
+        if (.not. file_exist) then
+            call s_mpi_abort(trim(file_path)//' is missing. Exiting ...')
+        end if
+
+        if (parallel_io .eqv. .false.) then
+            open (1, FILE=trim(file_path), FORM='unformatted', STATUS='unknown')
+            do dir = 1, num_dims
+                do loc = -1, 1, 2
+                    read (1) bc_type(dir, loc)%sf
+                end do
+            end do
+            close (1)
+        else
+#ifdef MFC_MPI
+            if (file_per_process) then
+
+            else
+
+            end if
+#endif
+        end if
+
+    end subroutine s_read_boundary_condition_types
+
+    subroutine s_read_boundary_condition_buffers(step_dirpath)
+
+        character(LEN=*), intent(in) :: step_dirpath
+
+        type(integer_field), dimension(1:num_dims,-1:1) :: bc_type
+
+        integer :: dir, loc
+        logical :: file_exist
+        character(len=path_len) :: file_path
+
+        character(len=10) :: status
+
+#ifdef MFC_MPI
+        integer :: ierr
+        integer :: file_id
+        integer :: offset
+        character(len=7) :: proc_rank_str
+#endif
+
+        if (parallel_io .eqv. .false.) then
+            file_path = trim(step_dirpath)//'/bc_buffers.dat'
+        else
+#ifdef MFC_MPI
+
+#endif
+        end if
+
+        inquire (FILE=trim(file_path), EXIST=file_exist)
+        if (.not. file_exist) then
+            call s_mpi_abort(trim(file_path)//' is missing. Exiting ...')
+        end if
+
+        if (parallel_io .eqv. .false.) then
+            open (1, FILE=trim(file_path), FORM='unformatted', STATUS='unknown')
+            do dir = 1, num_dims
+                do loc = -1, 1, 2
+                    read (1) bc_buffers(dir, loc)%sf
+                end do
+            end do
+            close (1)
+        else
+#ifdef MFC_MPI
+            if (file_per_process) then
+
+            else
+
+            end if
+#endif
+        end if
+
+    end subroutine s_read_boundary_condition_buffers
 
 end module m_boundary_conditions

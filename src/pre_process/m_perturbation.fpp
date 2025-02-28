@@ -27,11 +27,12 @@ module m_perturbation
     integer :: mixlayer_bc_fd ! Order of finite difference applied at the boundaries of mixing layer
     integer :: n_bc_skip ! Number of points skipped in the linear stability analysis due to the boundary condition
 
-    real(wp) :: bcxb, bcxe, bcyb, bcye, bczb, bcze
+    integer :: bcxb, bcxe, bcyb, bcye, bczb, bcze
 
 contains
 
     subroutine s_initialize_perturbation_module()
+
         bcxb = bc_x%beg; bcxe = bc_x%end; bcyb = bc_y%beg; bcye = bc_y%end; bczb = bc_z%beg; bcze = bc_z%end
 
         if (mixlayer_perturb) then
