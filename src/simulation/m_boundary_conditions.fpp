@@ -19,6 +19,14 @@ module m_boundary_conditions
 
     use m_variables_conversion
 
+    use m_delay_file_access
+
+    use m_compile_specific
+
+#ifdef MFC_MPI
+    use mpi
+#endif
+
     implicit none
 
     type(scalar_field), dimension(:,:), allocatable :: bc_buffers
@@ -26,10 +34,15 @@ module m_boundary_conditions
 
     real(wp) :: bcxb, bcxe, bcyb, bcye, bczb, bcze
 
+#ifdef MFC_MPI
+    integer, dimension(1:3, -1:1) :: MPI_BC_TYPE_TYPE, MPI_BC_BUFFER_TYPE
+#endif
+
     private; public :: s_populate_variables_buffers, &
               s_populate_capillary_buffers, &
               s_initialize_boundary_conditions_module, &
-              s_read_boundary_condition_files, &
+              s_read_serial_boundary_condition_files, &
+              s_read_parallel_boundary_condition_files, &
               s_finalize_boundary_conditions_module
 
 contains
@@ -144,7 +157,7 @@ contains
         end if
 
         if (n == 0) return
-        print*, bcyb, bcye
+
         !< y-direction
         if (bcyb >= 0) then
             call s_mpi_sendrecv_variables_buffers(q_prim_vf, pb, mv, 2, -1)
@@ -302,7 +315,7 @@ contains
             do l = -buff_size, n + buff_size
                 do k = -buff_size, m + buff_size
                     if (bc_type(3,1)%sf(k,l,0) >= -13 .and. bc_type(3,1)%sf(k,l,0) <= -3) then
-                        ${PRIM_GHOST_CELL_EXTRAPOLATION_BC("k,l,m+j","k,l,m")}$
+                        ${PRIM_GHOST_CELL_EXTRAPOLATION_BC("k,l,p+j","k,l,p")}$
                     elseif (bc_type(3,1)%sf(k,l,0) == -2) then
                         ${PRIM_SYMMETRY_BC(3,"k,l,p+j","k,l,p - (j-1)")}$
                     elseif (bc_type(3,1)%sf(k,l,0) == -1) then
@@ -635,19 +648,7 @@ contains
 
     end subroutine s_populate_capillary_buffers
 
-    subroutine s_read_boundary_condition_files(step_dirpath, bc_type)
-
-        character(LEN=*), intent(in) :: step_dirpath
-
-        type(integer_field), dimension(1:num_dims,-1:1) :: bc_type
-
-        call s_read_boundary_condition_types(step_dirpath, bc_type)
-
-        call s_read_boundary_condition_buffers(step_dirpath)
-
-    end subroutine s_read_boundary_condition_files
-
-    subroutine s_read_boundary_condition_types(step_dirpath, bc_type)
+    subroutine s_read_serial_boundary_condition_files(step_dirpath, bc_type)
 
         character(LEN=*), intent(in) :: step_dirpath
 
@@ -659,55 +660,44 @@ contains
 
         character(len=10) :: status
 
-#ifdef MFC_MPI
-        integer :: ierr
-        integer :: file_id
-        integer :: offset
-        character(len=7) :: proc_rank_str
-#endif
-
-        if (parallel_io .eqv. .false.) then
-            file_path = trim(step_dirpath)//'/bc_type.dat'
-        else
-#ifdef MFC_MPI
-
-#endif
-        end if
-
+        ! Read bc_types
+        file_path = trim(step_dirpath)//'/bc_type.dat'
         inquire (FILE=trim(file_path), EXIST=file_exist)
         if (.not. file_exist) then
             call s_mpi_abort(trim(file_path)//' is missing. Exiting ...')
         end if
 
-        if (parallel_io .eqv. .false.) then
-            open (1, FILE=trim(file_path), FORM='unformatted', STATUS='unknown')
-            do dir = 1, num_dims
-                do loc = -1, 1, 2
-                    read (1) bc_type(dir, loc)%sf
-                end do
+        open (1, FILE=trim(file_path), FORM='unformatted', STATUS='unknown')
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                read (1) bc_type(dir, loc)%sf
             end do
-            close (1)
-        else
-#ifdef MFC_MPI
-            if (file_per_process) then
+        end do
+        close (1)
 
-            else
-
-            end if
-#endif
+        ! Read bc_buffers
+        file_path = trim(step_dirpath)//'/bc_buffers.dat'
+        inquire (FILE=trim(file_path), EXIST=file_exist)
+        if (.not. file_exist) then
+            call s_mpi_abort(trim(file_path)//' is missing. Exiting ...')
         end if
 
-    end subroutine s_read_boundary_condition_types
+        open (1, FILE=trim(file_path), FORM='unformatted', STATUS='unknown')
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                read (1) bc_buffers(dir, loc)%sf
+            end do
+        end do
+        close (1)
 
-    subroutine s_read_boundary_condition_buffers(step_dirpath)
+    end subroutine s_read_serial_boundary_condition_files
 
-        character(LEN=*), intent(in) :: step_dirpath
+    subroutine s_read_parallel_boundary_condition_files(bc_type)
 
-        type(integer_field), dimension(1:num_dims,-1:1) :: bc_type
+        type(integer_field), dimension(1:num_dims, -1:1) :: bc_type
 
         integer :: dir, loc
-        logical :: file_exist
-        character(len=path_len) :: file_path
+        character(len=path_len) :: file_loc, file_path
 
         character(len=10) :: status
 
@@ -716,40 +706,82 @@ contains
         integer :: file_id
         integer :: offset
         character(len=7) :: proc_rank_str
-#endif
+        logical :: dir_check
 
-        if (parallel_io .eqv. .false.) then
-            file_path = trim(step_dirpath)//'/bc_buffers.dat'
-        else
-#ifdef MFC_MPI
-
-#endif
-        end if
-
-        inquire (FILE=trim(file_path), EXIST=file_exist)
-        if (.not. file_exist) then
-            call s_mpi_abort(trim(file_path)//' is missing. Exiting ...')
-        end if
-
-        if (parallel_io .eqv. .false.) then
-            open (1, FILE=trim(file_path), FORM='unformatted', STATUS='unknown')
-            do dir = 1, num_dims
-                do loc = -1, 1, 2
-                    read (1) bc_buffers(dir, loc)%sf
-                end do
-            end do
-            close (1)
-        else
-#ifdef MFC_MPI
-            if (file_per_process) then
-
-            else
-
+        if (proc_rank == 0) then
+            file_loc = trim(case_dir)//'/restart_data/boundary_conditions'
+            call my_inquire(file_loc, dir_check)
+            if (dir_check .neqv. .true.) then
+                call s_create_directory(trim(file_loc))
             end if
-#endif
         end if
+        call s_mpi_barrier()
 
-    end subroutine s_read_boundary_condition_buffers
+        call DelayFileAccess(proc_rank)
+
+        write (proc_rank_str, '(I7.7)') proc_rank
+        file_path = trim(file_loc)//'/bc_'//trim(proc_rank_str)//'.dat'
+        call MPI_File_open(MPI_COMM_SELF, trim(file_path), MPI_MODE_CREATE + MPI_MODE_WRONLY, MPI_INFO_NULL, file_id, ierr)
+
+        offset = 0
+
+        ! Write bc_types
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                call MPI_File_set_view(file_id, int(offset, KIND=MPI_ADDRESS_KIND), MPI_INTEGER, MPI_BC_TYPE_TYPE(dir, loc), 'native', MPI_INFO_NULL, ierr)
+                call MPI_File_read_all(file_id, bc_type(dir, loc)%sf, 1, MPI_BC_TYPE_TYPE(dir, loc), MPI_STATUS_IGNORE, ierr)
+                offset = offset + sizeof(bc_type(dir, loc)%sf)
+            end do
+        end do
+
+        ! Write bc_buffers
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                call MPI_File_set_view(file_id, int(offset, KIND=MPI_ADDRESS_KIND), mpi_p, MPI_BC_BUFFER_TYPE(dir, loc), 'native', MPI_INFO_NULL, ierr)
+                call MPI_File_read_all(file_id, bc_buffers(dir, loc)%sf, 1, MPI_BC_BUFFER_TYPE(dir, loc), MPI_STATUS_IGNORE, ierr)
+                offset = offset + sizeof(bc_buffers(dir, loc)%sf)
+            end do
+        end do
+
+        call MPI_File_close(file_id, ierr)
+#endif
+
+    end subroutine s_read_parallel_boundary_condition_files
+
+    subroutine s_create_mpi_types(bc_type)
+
+        type(integer_field), dimension(1:num_dims, -1:1) :: bc_type
+
+#ifdef MFC_MPI
+        integer :: dir, loc
+        integer, dimension(3) :: sf_start_idx, sf_extents_loc
+        integer :: ifile, ierr, data_size
+
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                sf_start_idx = (/0, 0, 0/)
+                sf_extents_loc = shape(bc_type(dir, loc)%sf)
+
+                call MPI_TYPE_CREATE_SUBARRAY(num_dims, sf_extents_loc, sf_extents_loc, sf_start_idx, &
+                                              MPI_ORDER_FORTRAN, MPI_INTEGER, MPI_BC_TYPE_TYPE(dir, loc), ierr)
+                call MPI_TYPE_COMMIT(MPI_BC_TYPE_TYPE(dir, loc), ierr)
+            end do
+        end do
+
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                sf_start_idx = (/0, 0, 0/)
+                sf_extents_loc = shape(bc_buffers(dir, loc)%sf)
+
+                call MPI_TYPE_CREATE_SUBARRAY(num_dims, sf_extents_loc, sf_extents_loc, sf_start_idx, &
+                                              MPI_ORDER_FORTRAN, mpi_p, MPI_BC_BUFFER_TYPE(dir, loc), ierr)
+                call MPI_TYPE_COMMIT(MPI_BC_BUFFER_TYPE(dir, loc), ierr)
+            end do
+        end do
+#endif
+    end subroutine s_create_mpi_types
+
+
 
     subroutine s_finalize_boundary_conditions_module()
 
@@ -767,6 +799,5 @@ contains
         @:DEALLOCATE(bc_buffers)
 
     end subroutine s_finalize_boundary_conditions_module
-
 
 end module m_boundary_conditions

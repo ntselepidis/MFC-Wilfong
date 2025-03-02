@@ -285,7 +285,7 @@ contains
             call s_mpi_abort(trim(file_path)//' is missing. Exiting.')
         end if
 
-        call s_read_boundary_condition_files(t_step_dir, bc_type)
+        call s_read_serial_boundary_condition_files(t_step_dir, bc_type)
 
         ! Cell-boundary Locations in x-direction
         file_path = trim(t_step_dir)//'/x_cb.dat'
@@ -944,6 +944,8 @@ contains
         end if
 
         deallocate (x_cb_glb, y_cb_glb, z_cb_glb)
+
+        call s_read_parallel_boundary_condition_files(bc_type)
 
 #endif
 

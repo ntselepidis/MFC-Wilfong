@@ -155,7 +155,7 @@ contains
             status = 'new'
         end if
 
-        call s_write_boundary_condition_files(q_prim_vf, bc_type, t_step_dir)
+        call s_write_serial_boundary_condition_files(q_prim_vf, bc_type, t_step_dir)
 
         ! x-coordinate direction
         file_loc = trim(t_step_dir)//'/x_cb.dat'
@@ -839,6 +839,8 @@ contains
 
         end if
 #endif
+
+        call s_write_parallel_boundary_condition_files(q_prim_vf, bc_type)
 
     end subroutine s_write_parallel_data_files
 

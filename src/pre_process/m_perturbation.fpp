@@ -810,12 +810,12 @@ contains
                     do k = 0, n
                         do j = 0, m
                             do i = 1, sys_size
-                                    q_prim_temp(j,k,l,i) = (1._wp/12._wp) * &
-                                        (q_prim_vf(i)%sf(j+1,k,l) + q_prim_vf(i)%sf(j-1,k,l) + &
-                                        q_prim_vf(i)%sf(j,k+1,l) + q_prim_vf(i)%sf(j,k-1,l) + &
-                                        q_prim_vf(i)%sf(j,k,l+1) + q_prim_vf(i)%sf(j,k,l-1) + &
-                                        6._wp*q_prim_vf(i)%sf(j,k,l))
-                                end do
+                                q_prim_temp(j,k,l,i) = (1._wp/12._wp) * &
+                                    (q_prim_vf(i)%sf(j+1,k,l) + q_prim_vf(i)%sf(j-1,k,l) + &
+                                    q_prim_vf(i)%sf(j,k+1,l) + q_prim_vf(i)%sf(j,k-1,l) + &
+                                    q_prim_vf(i)%sf(j,k,l+1) + q_prim_vf(i)%sf(j,k,l-1) + &
+                                    6._wp*q_prim_vf(i)%sf(j,k,l))
+                            end do
                         end do
                     end do
                 end do

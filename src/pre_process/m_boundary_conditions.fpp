@@ -6,7 +6,14 @@
 module m_boundary_conditions
 
     use m_derived_types
+
     use m_global_parameters
+#ifdef MFC_MPI
+    use mpi
+#endif
+    use m_delay_file_access
+
+    use m_compile_specific
 
     implicit none
 
@@ -18,9 +25,14 @@ module m_boundary_conditions
 
     integer :: i, j, k, l
 
+#ifdef MFC_MPI
+    integer, dimension(1:3, -1:1) :: MPI_BC_TYPE_TYPE, MPI_BC_BUFFER_TYPE
+#endif
+
     private; public :: s_initialize_boundary_conditions_module, &
         s_apply_boundary_patches, &
-        s_write_boundary_condition_files, &
+        s_write_serial_boundary_condition_files, &
+        s_write_parallel_boundary_condition_files, &
         s_finalize_boundary_conditions_module
 
 contains
@@ -137,7 +149,7 @@ contains
 
     end subroutine s_apply_boundary_patches
 
-    subroutine s_write_boundary_condition_files(q_prim_vf, bc_type, step_dirpath)
+    subroutine s_write_serial_boundary_condition_files(q_prim_vf, bc_type, step_dirpath)
 
         type(scalar_field), dimension(sys_size) :: q_prim_vf
         type(integer_field), dimension(1:num_dims, -1:1) :: bc_type
@@ -149,13 +161,6 @@ contains
 
         character(len=10) :: status
 
-#ifdef MFC_MPI
-        integer :: ierr
-        integer :: file_id
-        integer :: offset
-        character(len=7) :: proc_rank_str
-#endif
-
         if (old_grid) then
             status = 'old'
         else
@@ -164,36 +169,117 @@ contains
 
         call s_pack_boundary_condition_buffers(q_prim_vf)
 
-        if (parallel_io .eqv. .false.) then
-            file_path = trim(step_dirpath)//'/bc_type.dat'
-            open (1, FILE=trim(file_path), FORM='unformatted', STATUS=status)
-            do dir = 1, num_dims
-                do loc = -1, 1, 2
-                    write (1) bc_type(dir, loc)%sf
-                end do
+        file_path = trim(step_dirpath)//'/bc_type.dat'
+        open (1, FILE=trim(file_path), FORM='unformatted', STATUS=status)
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                write (1) bc_type(dir, loc)%sf
             end do
-            close (1)
+        end do
+        close (1)
 
-            file_path = trim(step_dirpath)//'/bc_buffers.dat'
-            open (1, FILE=trim(file_path), FORM='unformatted', STATUS=status)
-            do dir = 1, num_dims
-                do loc = -1, 1, 2
-                    write (1) bc_buffers(dir, loc)%sf
-                end do
+        file_path = trim(step_dirpath)//'/bc_buffers.dat'
+        open (1, FILE=trim(file_path), FORM='unformatted', STATUS=status)
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                write (1) bc_buffers(dir, loc)%sf
             end do
-            close (1)
+        end do
+        close (1)
 
-        else
+    end subroutine s_write_serial_boundary_condition_files
+
+    subroutine s_write_parallel_boundary_condition_files(q_prim_vf, bc_type)
+
+        type(scalar_field), dimension(sys_size) :: q_prim_vf
+        type(integer_field), dimension(1:num_dims, -1:1) :: bc_type
+
+        integer :: dir, loc
+        character(len=path_len) :: file_loc, file_path
+
+        character(len=10) :: status
+
 #ifdef MFC_MPI
-            if (file_per_process) then
+        integer :: ierr
+        integer :: file_id
+        integer :: offset
+        character(len=7) :: proc_rank_str
+        logical :: dir_check
 
-            else
+        call s_pack_boundary_condition_buffers(q_prim_vf)
 
+        if (proc_rank == 0) then
+            file_loc = trim(case_dir)//'/restart_data/boundary_conditions'
+            call my_inquire(file_loc, dir_check)
+            if (dir_check .neqv. .true.) then
+                call s_create_directory(trim(file_loc))
             end if
-#endif
         end if
+        call s_mpi_barrier()
 
-    end subroutine s_write_boundary_condition_files
+        call DelayFileAccess(proc_rank)
+
+        write (proc_rank_str, '(I7.7)') proc_rank
+        file_path = trim(file_loc)//'/bc_'//trim(proc_rank_str)//'.dat'
+        call MPI_File_open(MPI_COMM_SELF, trim(file_path), MPI_MODE_CREATE + MPI_MODE_WRONLY, MPI_INFO_NULL, file_id, ierr)
+
+        offset = 0
+
+        ! Write bc_types
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                call MPI_File_set_view(file_id, int(offset, KIND=MPI_ADDRESS_KIND), MPI_INTEGER, MPI_BC_TYPE_TYPE(dir, loc), 'native', MPI_INFO_NULL, ierr)
+                call MPI_File_write_all(file_id, bc_type(dir, loc)%sf, 1, MPI_BC_TYPE_TYPE(dir, loc), MPI_STATUS_IGNORE, ierr)
+                offset = offset + sizeof(bc_type(dir, loc)%sf)
+            end do
+        end do
+
+        ! Write bc_buffers
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                call MPI_File_set_view(file_id, int(offset, KIND=MPI_ADDRESS_KIND), mpi_p, MPI_BC_BUFFER_TYPE(dir, loc), 'native', MPI_INFO_NULL, ierr)
+                call MPI_File_write_all(file_id, bc_buffers(dir, loc)%sf, 1, MPI_BC_BUFFER_TYPE(dir, loc), MPI_STATUS_IGNORE, ierr)
+                offset = offset + sizeof(bc_buffers(dir, loc)%sf)
+            end do
+        end do
+
+        call MPI_File_close(file_id, ierr)
+#endif
+
+    end subroutine s_write_parallel_boundary_condition_files
+
+    subroutine s_create_mpi_types(bc_type)
+
+        type(integer_field), dimension(1:num_dims, -1:1) :: bc_type
+
+#ifdef MFC_MPI
+        integer :: dir, loc
+        integer, dimension(3) :: sf_start_idx, sf_extents_loc
+        integer :: ifile, ierr, data_size
+
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                sf_start_idx = (/0, 0, 0/)
+                sf_extents_loc = shape(bc_type(dir, loc)%sf)
+
+                call MPI_TYPE_CREATE_SUBARRAY(num_dims, sf_extents_loc, sf_extents_loc, sf_start_idx, &
+                                              MPI_ORDER_FORTRAN, MPI_INTEGER, MPI_BC_TYPE_TYPE(dir, loc), ierr)
+                call MPI_TYPE_COMMIT(MPI_BC_TYPE_TYPE(dir, loc), ierr)
+            end do
+        end do
+
+        do dir = 1, num_dims
+            do loc = -1, 1, 2
+                sf_start_idx = (/0, 0, 0/)
+                sf_extents_loc = shape(bc_buffers(dir, loc)%sf)
+
+                call MPI_TYPE_CREATE_SUBARRAY(num_dims, sf_extents_loc, sf_extents_loc, sf_start_idx, &
+                                              MPI_ORDER_FORTRAN, mpi_p, MPI_BC_BUFFER_TYPE(dir, loc), ierr)
+                call MPI_TYPE_COMMIT(MPI_BC_BUFFER_TYPE(dir, loc), ierr)
+            end do
+        end do
+#endif
+    end subroutine s_create_mpi_types
 
     subroutine s_pack_boundary_condition_buffers(q_prim_vf)
 
@@ -202,7 +288,6 @@ contains
         do k = 0, p
             do j = 0, n
                 do i = 1, sys_size
-                    print*, i, j, k
                     bc_buffers(1,-1)%sf(i,j,k) = q_prim_vf(i)%sf(-1,j,k)
                     bc_buffers(1,1)%sf(i,j,k) = q_prim_vf(i)%sf(m+1,j,k)
                 end do
@@ -228,9 +313,7 @@ contains
                         end do
                     end do
                 end do
-
             end if
-
         end if
 
     end subroutine s_pack_boundary_condition_buffers

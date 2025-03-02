@@ -12,7 +12,7 @@ velS = 0.701*c_l
 rhoS = 1.862*rhoA
 
 leng = 1e-2
-Ny = 250
+Ny = 100
 Nx = Ny * 3
 dx = leng / Nx
 
@@ -87,6 +87,7 @@ print(
             "patch_bc(1)%alpha(1)": eps,
             "patch_bc(1)%alpha_rho(2)": (1-eps)*rhoS,
             "patch_bc(1)%alpha(2)": 1-eps,
+
 
             # Formatted Database Files Structure Parameters
             "format": 1,
