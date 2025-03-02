@@ -50,6 +50,8 @@ module m_start_up
 
     use m_checker
 
+    use m_boundary_conditions
+
     implicit none
 
     private; 
@@ -142,7 +144,8 @@ contains
             sigma, adv_n, cfl_adap_dt, cfl_const_dt, n_start, &
             n_start_old, surface_tension, hyperelasticity, pre_stress, rkck_adap_dt, &
             bc_x, bc_y, bc_z, igr, alf_igr, elliptic_smoothing, &
-            elliptic_smoothing_iters, patch_bc, num_bc_patches
+            elliptic_smoothing_iters, patch_bc, num_bc_patches, &
+            viscous, bubbles_lagrange
 
         ! Inquiring the status of the pre_process.inp file
         file_loc = 'pre_process.inp'
@@ -774,6 +777,7 @@ contains
         call s_initialize_initial_condition_module()
         call s_initialize_perturbation_module()
         call s_initialize_assign_variables_module()
+        call s_initialize_boundary_conditions_module()
         if (relax) call s_initialize_phasechange_module()
 
         ! Create the D directory if it doesn't exit, to store
@@ -924,6 +928,7 @@ contains
         call s_finalize_data_output_module()
         call s_finalize_global_parameters_module()
         call s_finalize_assign_variables_module()
+        call s_finalize_boundary_conditions_module()
         if (relax) call s_finalize_relaxation_solver_module()
 
         ! Finalization of the MPI environment

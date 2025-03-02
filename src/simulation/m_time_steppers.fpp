@@ -307,11 +307,11 @@ contains
         @:ALLOCATE(bc_type(1,-1)%sf(0:0,0:n,0:p))
         @:ALLOCATE(bc_type(1,1)%sf(0:0,0:n,0:p))
         if (n > 0) then
-            @:ALLOCATE(bc_type(2,-1)%sf(0:m,0:0,0:p))
-            @:ALLOCATE(bc_type(2,1)%sf(0:m,0:0,0:p))
+            @:ALLOCATE(bc_type(2,-1)%sf(-buff_size:m+buff_size,0:0,0:p))
+            @:ALLOCATE(bc_type(2,1)%sf(-buff_size:m+buff_size,0:0,0:p))
             if (p > 0) then
-                @:ALLOCATE(bc_type(3,-1)%sf(0:m,0:n,0:0))
-                @:ALLOCATE(bc_type(3,1)%sf(0:m,0:n,0:0))
+                @:ALLOCATE(bc_type(3,-1)%sf(-buff_size:m+buff_size,-buff_size:n+buff_size,0:0))
+                @:ALLOCATE(bc_type(3,1)%sf(-buff_size:m+buff_size,-buff_size:n+buff_size,0:0))
             end if
         end if
 

@@ -39,7 +39,7 @@ module m_global_parameters
     integer :: m
     integer :: n
     integer :: p
-    integer, parameter :: buff_size = 2 ! buff size for elliptic smoothing
+    integer :: buff_size ! buff size for elliptic smoothing
 
     integer(8) :: nGlobal !< Global number of cells in the domain
 
@@ -83,6 +83,7 @@ module m_global_parameters
     integer :: num_fluids            !< Number of different fluids present in the flow
     logical :: mpp_lim               !< Alpha limiter
     integer :: sys_size              !< Number of unknowns in the system of equations
+    integer :: weno_polyn
     integer :: weno_order            !< Order of accuracy for the WENO reconstruction
     logical :: hypoelasticity        !< activate hypoelasticity
     logical :: hyperelasticity       !< activate hyperelasticity
@@ -149,6 +150,9 @@ module m_global_parameters
     integer :: alf_igr
     logical :: elliptic_smoothing !< Enables Ellipitcal Smoothing in Patches
     integer :: elliptic_smoothing_iters !< Iterations of Elliptic Smoothing done
+
+    logical :: viscous       !< Viscous effects
+    logical :: bubbles_lagrange                         !< Lagrangian subgrid bubble model switch
 
 
 #ifdef MFC_MPI
@@ -522,6 +526,9 @@ contains
         elliptic_smoothing = .false.
         elliptic_smoothing_iters = 1
 
+        viscous = .false.
+        bubbles_lagrange = .false.
+
     end subroutine s_assign_default_values_to_user_inputs
 
     !> Computation of parameters, allocation procedures, and/or
@@ -529,6 +536,8 @@ contains
     subroutine s_initialize_global_parameters_module
 
         integer :: i, j, fac
+
+        weno_polyn = (weno_order - 1)/2
 
         ! Determining the layout of the state vectors and overall size of
         ! the system of equations, given the dimensionality and choice of
@@ -812,6 +821,21 @@ contains
         chemxb = species_idx%beg
         chemxe = species_idx%end
 
+        if (viscous) then
+            buff_size = 2*weno_polyn + 2
+        else
+            buff_size = weno_polyn + 2
+        end if
+
+        if(igr) then
+            buff_size = 2*weno_polyn + 2
+        end if
+
+        ! Correction for smearing function in the lagrangian subgrid bubble model
+        if (bubbles_lagrange) then
+            buff_size = max(buff_size, 6)
+        end if
+
         ! Configuring Coordinate Direction Indexes
         idwint(1)%beg = 0; idwint(2)%beg = 0; idwint(3)%beg = 0
         idwint(1)%end = m; idwint(2)%end = n; idwint(3)%end = p
@@ -820,7 +844,6 @@ contains
         idwbuff(1) = idwint(1); idwbuff(2) = idwint(2); idwbuff(3) = idwint(3)
 
 #ifdef MFC_MPI
-
         if (qbmm .and. .not. polytropic) then
             allocate (MPI_IO_DATA%view(1:sys_size + 2*nb*4))
             allocate (MPI_IO_DATA%var(1:sys_size + 2*nb*4))

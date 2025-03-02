@@ -1491,6 +1491,7 @@ contains
         call s_initialize_data_output_module()
         call s_initialize_derived_variables_module()
         call s_initialize_time_steppers_module()
+        call s_initialize_boundary_conditions_module()
 
 #if defined(MFC_OpenACC) && defined(MFC_MEMORY_DUMP)
         call acc_present_dump()
@@ -1515,8 +1516,8 @@ contains
         ! the modules. The preparations below DO DEPEND on the grid being complete.
         if (.not. igr) call s_initialize_weno_module()
         if(igr .or. riemann_solver == 4) then 
-		call s_initialize_igr_module()
-	end if
+            call s_initialize_igr_module()
+        end if
 
 #if defined(MFC_OpenACC) && defined(MFC_MEMORY_DUMP)
         print *, "[MEM-INST] After: s_initialize_weno_module"
@@ -1673,6 +1674,7 @@ contains
             call s_finalize_riemann_solvers_module()
             call s_finalize_weno_module()
         end if
+        call s_finalize_boundary_conditions_module()
         call s_finalize_variables_conversion_module()
         if (grid_geometry == 3) call s_finalize_fftw_module
         call s_finalize_mpi_proxy_module()

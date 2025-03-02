@@ -29,7 +29,8 @@ module m_boundary_conditions
     private; public :: s_populate_variables_buffers, &
               s_populate_capillary_buffers, &
               s_initialize_boundary_conditions_module, &
-              s_read_boundary_condition_files
+              s_read_boundary_condition_files, &
+              s_finalize_boundary_conditions_module
 
 contains
 
@@ -43,12 +44,12 @@ contains
         @:ALLOCATE(bc_buffers(1, 1)%sf(1:sys_size, 0:n, 0:p))
         @:ACC_SETUP_SFs(bc_buffers(1,-1), bc_buffers(1,1))
         if (n > 0) then
-            @:ALLOCATE(bc_buffers(2,-1)%sf(0:m,1:sys_size,0:p))
-            @:ALLOCATE(bc_buffers(2,1)%sf(0:m,1:sys_size,0:p))
+            @:ALLOCATE(bc_buffers(2,-1)%sf(-buff_size:m+buff_size,1:sys_size,0:p))
+            @:ALLOCATE(bc_buffers(2,1)%sf(-buff_size:m+buff_size,1:sys_size,0:p))
             @:ACC_SETUP_SFs(bc_buffers(2,-1), bc_buffers(2,1))
             if (p > 0) then
-                @:ALLOCATE(bc_buffers(3,-1)%sf(0:m,0:n,1:sys_size))
-                @:ALLOCATE(bc_buffers(3,1)%sf(0:m,0:n,1:sys_size))
+                @:ALLOCATE(bc_buffers(3,-1)%sf(-buff_size:m+buff_size,-buff_size:n+buff_size,1:sys_size))
+                @:ALLOCATE(bc_buffers(3,1)%sf(-buff_size:m+buff_size,-buff_size:n+buff_size,1:sys_size))
                 @:ACC_SETUP_SFs(bc_buffers(3,-1), bc_buffers(3,1))
             end if
         end if
@@ -93,7 +94,7 @@ contains
             !$acc parallel loop collapse(2) gang vector default(present)
             do l = 0, p
                 do k = 0, n
-                    if (bc_type(1,1)%sf(0,k,l) >= -13 .and. bc_type(1,-1)%sf(0,k,l) <= -3) then
+                    if (bc_type(1,1)%sf(0,k,l) >= -13 .and. bc_type(1,1)%sf(0,k,l) <= -3) then
                         ${PRIM_GHOST_CELL_EXTRAPOLATION_BC("m+j,k,l","m,k,l")}$
                     elseif (bc_type(1,1)%sf(0,k,l) == -2) then
                         ${PRIM_SYMMETRY_BC(1,"m+j,k,l","m - (j-1),k,l")}$
@@ -115,11 +116,11 @@ contains
                 !$acc parallel loop collapse(2) gang vector default(present)
                 do l = 0, p
                     do k = 0, n
-                        if (bc_type(1,-1)%sf(0,j,k) >= -13 .and. bc_type(1,-1)%sf(0,j,k) <= -3) then
+                        if (bc_type(1,-1)%sf(0,k,l) >= -13 .and. bc_type(1,-1)%sf(0,k,l) <= -3) then
                             ${QBMM_BC("-j,k,l,q,i","0,k,l,q,i")}$
-                        elseif (bc_type(1,-1)%sf(0,j,k) == -2) then
+                        elseif (bc_type(1,-1)%sf(0,k,l) == -2) then
                             ${QBMM_BC("-j,k,l,q,i","j-1,k,l,q,i")}$
-                        elseif (bc_type(1,-1)%sf(0,j,k) == -1) then
+                        elseif (bc_type(1,-1)%sf(0,k,l) == -1) then
                             ${QBMM_BC("-j,k,l,q,i","m - (j-1),k,l,q,i")}$
                         end if
                     end do
@@ -130,11 +131,11 @@ contains
                 !$acc parallel loop collapse(2) gang vector default(present)
                 do l = 0, p
                     do k = 0, n
-                        if (bc_type(1,1)%sf(0,j,k) >= -13 .and. bc_type(1,1)%sf(0,j,k) <= -3) then
+                        if (bc_type(1,1)%sf(0,k,l) >= -13 .and. bc_type(1,1)%sf(0,k,l) <= -3) then
                             ${QBMM_BC("m+j,k,l,q,i","m,k,l,q,i")}$
-                        elseif (bc_type(1,1)%sf(0,j,k) == -2) then
+                        elseif (bc_type(1,1)%sf(0,k,l) == -2) then
                             ${QBMM_BC("m+j,k,l,q,i","m - (j-1),k,l,q,i")}$
-                        elseif (bc_type(1,1)%sf(0,j,k) == -1) then
+                        elseif (bc_type(1,1)%sf(0,k,l) == -1) then
                             ${QBMM_BC("m+j,k,l,q,i","j-1,k,l,q,i")}$
                         end if
                     end do
@@ -143,7 +144,7 @@ contains
         end if
 
         if (n == 0) return
-
+        print*, bcyb, bcye
         !< y-direction
         if (bcyb >= 0) then
             call s_mpi_sendrecv_variables_buffers(q_prim_vf, pb, mv, 2, -1)
@@ -197,7 +198,7 @@ contains
             do l = 0, p
                 do k = -buff_size, m + buff_size
                     if (bc_type(2,-1)%sf(k,0,l) >= -13 .and. bc_type(2,-1)%sf(k,0,l) <= -3) then
-                        ${PRIM_GHOST_CELL_EXTRAPOLATION_BC("k,-j,l","m,0,l")}$
+                        ${PRIM_GHOST_CELL_EXTRAPOLATION_BC("k,-j,l","k,0,l")}$
                     elseif (bc_type(2,-1)%sf(k,0,l) == -2) then
                         ${PRIM_SYMMETRY_BC(2,"k,-j,l","k,j-1,l")}$
                     elseif (bc_type(2,-1)%sf(k,0,l) == -1) then
@@ -224,13 +225,13 @@ contains
                     elseif (bc_type(2,1)%sf(k,0,l) == -2) then
                         ${PRIM_SYMMETRY_BC(2,"k,n+j,l","k,n - (j-1),l")}$
                     elseif (bc_type(2,1)%sf(k,0,l) == -1) then
-                        ${PRIM_PERIODIC_BC("k,m+j,l","k,j-1,l")}$
+                        ${PRIM_PERIODIC_BC("k,n+j,l","k,j-1,l")}$
                     elseif (bc_type(2,1)%sf(k,0,l) == -15) then
                         ${PRIM_SLIP_WALL_BC("y","R")}$
                     elseif (bc_type(2,1)%sf(k,0,l) == -16) then
                         ${PRIM_NO_SLIP_WALL_BC("y","R")}$
                     elseif (bc_type(2,1)%sf(k,0,l) == -17) then
-                        ${PRIM_DIRICHLET_BC(2,1,"k,m+j,l","k,i,l")}$
+                        ${PRIM_DIRICHLET_BC(2,1,"k,n+j,l","k,i,l")}$
                     end if
                 end do
             end do
@@ -241,11 +242,11 @@ contains
                 !$acc parallel loop collapse(2) gang vector default(present)
                 do l = 0, p
                     do k = -buff_size, m + buff_size
-                        if (bc_type(2,-1)%sf(j,0,k) >= -13 .and. bc_type(2,-1)%sf(j,0,k) <= -3) then
+                        if (bc_type(2,-1)%sf(k,0,l) >= -13 .and. bc_type(2,-1)%sf(k,0,l) <= -3) then
                             ${QBMM_BC("k,-j,l,q,i","k,0,l,q,i")}$
-                        elseif (bc_type(2,-1)%sf(j,0,k) == -2) then
+                        elseif (bc_type(2,-1)%sf(k,0,l) == -2) then
                             ${QBMM_BC("k,-j,l,q,i","k,j-1,l,q,i")}$
-                        elseif (bc_type(2,-1)%sf(j,0,k) == -1) then
+                        elseif (bc_type(2,-1)%sf(k,0,l) == -1) then
                             ${QBMM_BC("k,-j,l,q,i","k,n - (j-1),l,q,i")}$
                         end if
                     end do
@@ -256,11 +257,11 @@ contains
                 !$acc parallel loop collapse(2) gang vector default(present)
                 do l = 0, p
                     do k = -buff_size, m + buff_size
-                        if (bc_type(2,1)%sf(j,0,k) >= -13 .and. bc_type(2,1)%sf(j,0,k) <= -3) then
+                        if (bc_type(2,1)%sf(k,0,l) >= -13 .and. bc_type(2,1)%sf(k,0,l) <= -3) then
                             ${QBMM_BC("k,n+j,l,q,i","k,n,l,q,i")}$
-                        elseif (bc_type(2,1)%sf(j,0,k) == -2) then
+                        elseif (bc_type(2,1)%sf(k,0,l) == -2) then
                             ${QBMM_BC("k,n+j,l,q,i","k,n - (j-1),l,q,i")}$
-                        elseif (bc_type(2,1)%sf(j,0,k) == -1) then
+                        elseif (bc_type(2,1)%sf(k,0,l) == -1) then
                             ${QBMM_BC("k,n+j,l,q,i","k,j-1,k,q,i")}$
                         end if
                     end do
@@ -322,11 +323,11 @@ contains
                 !$acc parallel loop collapse(2) gang vector default(present)
                 do l = -buff_size, n + buff_size
                     do k = -buff_size, m + buff_size
-                        if (bc_type(3,-1)%sf(j,k,0) >= -13 .and. bc_type(3,-1)%sf(j,k,0) <= -3) then
+                        if (bc_type(3,-1)%sf(k,l,0) >= -13 .and. bc_type(3,-1)%sf(k,l,0) <= -3) then
                             ${QBMM_BC("k,l,-j,q,i","k,l,0,q,i")}$
-                        elseif (bc_type(3,-1)%sf(j,k,0) == -2) then
+                        elseif (bc_type(3,-1)%sf(k,l,0) == -2) then
                             ${QBMM_BC("k,l,-j,q,i","k,l,j-1,q,i")}$
-                        elseif (bc_type(3,-1)%sf(j,k,0) == -1) then
+                        elseif (bc_type(3,-1)%sf(k,l,0) == -1) then
                             ${QBMM_BC("k,l,-j,q,i","k,l,p - (j-1),q,i")}$
                         end if
                     end do
@@ -337,11 +338,11 @@ contains
                 !$acc parallel loop collapse(2) gang vector default(present)
                 do l = -buff_size, n + buff_size
                     do k = -buff_size, m + buff_size
-                        if (bc_type(3,1)%sf(j,k,0) >= -13 .and. bc_type(3,1)%sf(j,k,0) <= -3) then
+                        if (bc_type(3,1)%sf(k,l,0) >= -13 .and. bc_type(3,1)%sf(k,l,0) <= -3) then
                             ${QBMM_BC("k,l,p+j,q,i","k,l,p,q,i")}$
-                        elseif (bc_type(3,1)%sf(j,k,0) == -2) then
+                        elseif (bc_type(3,1)%sf(k,l,0) == -2) then
                             ${QBMM_BC("k,l,p+j,q,i","k,l,p - (j-1),q,i")}$
-                        elseif (bc_type(3,1)%sf(j,k,0) == -1) then
+                        elseif (bc_type(3,1)%sf(k,l,0) == -1) then
                             ${QBMM_BC("k,l,p+j,q,i","k,l,j-1,q,i")}$
                         end if
                     end do
@@ -749,5 +750,23 @@ contains
         end if
 
     end subroutine s_read_boundary_condition_buffers
+
+    subroutine s_finalize_boundary_conditions_module()
+
+        @:DEALLOCATE(bc_buffers(1, -1)%sf)
+        @:DEALLOCATE(bc_buffers(1, 1)%sf)
+        if (n > 0) then
+            @:DEALLOCATE(bc_buffers(2,-1)%sf)
+            @:DEALLOCATE(bc_buffers(2,1)%sf)
+            if (p > 0) then
+                @:DEALLOCATE(bc_buffers(3,-1)%sf)
+                @:DEALLOCATE(bc_buffers(3,1)%sf)
+            end if
+        end if
+
+        @:DEALLOCATE(bc_buffers)
+
+    end subroutine s_finalize_boundary_conditions_module
+
 
 end module m_boundary_conditions

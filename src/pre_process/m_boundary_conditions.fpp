@@ -14,13 +14,14 @@ module m_boundary_conditions
     real(wp) :: length_x, length_y, length_z
     type(bounds_info) :: x_boundary, y_boundary, z_boundary  !<
 
-    type(scalar_field), dimension(:,:,:), allocatable :: bc_buffers
+    type(scalar_field), dimension(:,:), allocatable :: bc_buffers
 
     integer :: i, j, k, l
 
     private; public :: s_initialize_boundary_conditions_module, &
         s_apply_boundary_patches, &
-        s_write_boundary_condition_files
+        s_write_boundary_condition_files, &
+        s_finalize_boundary_conditions_module
 
 contains
 
@@ -31,11 +32,11 @@ contains
         allocate(bc_buffers(1, -1)%sf(1:sys_size, 0:n, 0:p))
         allocate(bc_buffers(1, 1)%sf(1:sys_size, 0:n, 0:p))
         if (n > 0) then
-            allocate(bc_buffers(2,-1)%sf(0:m,1:sys_size,0:p))
-            allocate(bc_buffers(2,1)%sf(0:m,1:sys_size,0:p))
+            allocate(bc_buffers(2,-1)%sf(-buff_size:m+buff_size,1:sys_size,0:p))
+            allocate(bc_buffers(2,1)%sf(-buff_size:m+buff_size,1:sys_size,0:p))
             if (p > 0) then
-                allocate(bc_buffers(3,-1)%sf(0:m,0:n,1:sys_size))
-                allocate(bc_buffers(3,1)%sf(0:m,0:n,1:sys_size))
+                allocate(bc_buffers(3,-1)%sf(-buff_size:m+buff_size,-buff_size:n+buff_size,1:sys_size))
+                allocate(bc_buffers(3,1)%sf(-buff_size:m+buff_size,-buff_size:n+buff_size,1:sys_size))
             end if
         end if
 
@@ -201,6 +202,7 @@ contains
         do k = 0, p
             do j = 0, n
                 do i = 1, sys_size
+                    print*, i, j, k
                     bc_buffers(1,-1)%sf(i,j,k) = q_prim_vf(i)%sf(-1,j,k)
                     bc_buffers(1,1)%sf(i,j,k) = q_prim_vf(i)%sf(m+1,j,k)
                 end do
@@ -221,8 +223,8 @@ contains
                 do k = 1, sys_size
                     do j = 0, n
                         do i = 0, m
-                            bc_buffers(2,-1)%sf(i,j,k) = q_prim_vf(j)%sf(i,j,-1)
-                            bc_buffers(2,1)%sf(i,j,k) = q_prim_vf(j)%sf(i,n,p+1)
+                            bc_buffers(3,-1)%sf(i,j,k) = q_prim_vf(k)%sf(i,j,-1)
+                            bc_buffers(3,1)%sf(i,j,k) = q_prim_vf(k)%sf(i,j,p+1)
                         end do
                     end do
                 end do
@@ -246,7 +248,7 @@ contains
             end if
         end if
 
-        allocate(bc_buffers)
+        deallocate(bc_buffers)
 
     end subroutine s_finalize_boundary_conditions_module
 

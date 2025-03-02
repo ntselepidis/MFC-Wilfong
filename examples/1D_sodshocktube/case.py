@@ -24,7 +24,7 @@ print(
             "dt": mydt,
             "t_step_start": 0,
             "t_step_stop": int(Nt),
-            "t_step_save": int(math.ceil(Nt / 10.0)),
+            "t_step_save": int(math.ceil(Nt / 100.0)),
             # Simulation Algorithm Parameters
             "num_patches": 2,
             "model_eqns": 2,
@@ -49,7 +49,7 @@ print(
             "format": 1,
             "precision": 2,
             "prim_vars_wrt": "T",
-            "parallel_io": "T",
+            "parallel_io": "F",
             # Patch 1 L
             "patch_icpp(1)%geometry": 1,
             "patch_icpp(1)%x_centroid": 0.25,

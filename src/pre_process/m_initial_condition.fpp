@@ -127,23 +127,23 @@ contains
         end do
 
         if (n > 0) then
-            allocate(bc_type(2,-1)%sf(0:m,0:0,0:p))
-            allocate(bc_type(2,1)%sf(0:m,0:0,0:p))
+            allocate(bc_type(2,-1)%sf(-buff_size:m+buff_size,0:0,0:p))
+            allocate(bc_type(2,1)%sf(-buff_size:m+buff_size,0:0,0:p))
 
             do l = 0, p
-                do j = 0, m
+                do j = -buff_size, m + buff_size
                     bc_type(2,-1)%sf(j,0,l) = bc_y%beg
                     bc_type(2,1)%sf(j,0,l) = bc_y%end
                 end do
             end do
 
             if (p > 0) then
-                allocate(bc_type(3,-1)%sf(0:m,0:n,0:0))
-                allocate(bc_type(3,1)%sf(0:m,0:n,0:0))
+                allocate(bc_type(3,-1)%sf(-buff_size:m+buff_size,-buff_size:n+buff_size,0:0))
+                allocate(bc_type(3,1)%sf(-buff_size:m+buff_size,-buff_size:n+buff_size,0:0))
 
 
-                do k = 0, n
-                    do j = 0, m
+                do k = -buff_size, n + buff_size
+                    do j = -buff_size, m + buff_size
                         bc_type(3,-1)%sf(j,k,0) = bc_z%beg
                         bc_type(3,1)%sf(j,k,0) = bc_z%end
                     end do
