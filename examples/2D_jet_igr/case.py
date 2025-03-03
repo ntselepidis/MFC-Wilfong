@@ -12,11 +12,11 @@ velS = 0.701*c_l
 rhoS = 1.862*rhoA
 
 leng = 1e-2
-Ny = 250
+Ny = 100
 Nx = Ny * 3
 dx = leng / Nx
 
-time_end = 1.5 * leng / velS
+time_end = 0.25 * leng / velS
 cfl = 0.6
 
 dt = cfl * dx / c_l
@@ -67,7 +67,7 @@ print(
             # "elliptic_smoothing": "T",
             # "elliptic_smoothing_iters": 50,
 
-            "bc_x%beg": -16,
+            "bc_x%beg": -2,
             "bc_x%end": -3,
             "bc_y%beg": -3,
             "bc_y%end": -3,
@@ -92,7 +92,7 @@ print(
             "format": 1,
             "precision": 2,
             "prim_vars_wrt": "T",
-            "parallel_io": "F",
+            "parallel_io": "T",
             # "file_per_process": "T",
 
             # Patch 1: Background

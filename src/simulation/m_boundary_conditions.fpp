@@ -708,24 +708,28 @@ contains
         character(len=7) :: proc_rank_str
         logical :: dir_check
 
+        file_loc = trim(case_dir)//'/restart_data/boundary_conditions'
+
         if (proc_rank == 0) then
-            file_loc = trim(case_dir)//'/restart_data/boundary_conditions'
             call my_inquire(file_loc, dir_check)
             if (dir_check .neqv. .true.) then
-                call s_create_directory(trim(file_loc))
+                call s_mpi_abort(trim(file_loc)//' is missing. Exiting ...')
             end if
         end if
+
+        call s_create_mpi_types(bc_type)
+
         call s_mpi_barrier()
 
         call DelayFileAccess(proc_rank)
 
         write (proc_rank_str, '(I7.7)') proc_rank
         file_path = trim(file_loc)//'/bc_'//trim(proc_rank_str)//'.dat'
-        call MPI_File_open(MPI_COMM_SELF, trim(file_path), MPI_MODE_CREATE + MPI_MODE_WRONLY, MPI_INFO_NULL, file_id, ierr)
+        call MPI_File_open(MPI_COMM_SELF, trim(file_path), MPI_MODE_RDONLY, MPI_INFO_NULL, file_id, ierr)
 
         offset = 0
 
-        ! Write bc_types
+        ! Read bc_types
         do dir = 1, num_dims
             do loc = -1, 1, 2
                 call MPI_File_set_view(file_id, int(offset, KIND=MPI_ADDRESS_KIND), MPI_INTEGER, MPI_BC_TYPE_TYPE(dir, loc), 'native', MPI_INFO_NULL, ierr)
@@ -734,7 +738,7 @@ contains
             end do
         end do
 
-        ! Write bc_buffers
+        ! Read bc_buffers
         do dir = 1, num_dims
             do loc = -1, 1, 2
                 call MPI_File_set_view(file_id, int(offset, KIND=MPI_ADDRESS_KIND), mpi_p, MPI_BC_BUFFER_TYPE(dir, loc), 'native', MPI_INFO_NULL, ierr)

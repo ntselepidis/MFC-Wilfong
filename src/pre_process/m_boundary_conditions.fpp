@@ -208,13 +208,16 @@ contains
 
         call s_pack_boundary_condition_buffers(q_prim_vf)
 
+        file_loc = trim(case_dir)//'/restart_data/boundary_conditions'
         if (proc_rank == 0) then
-            file_loc = trim(case_dir)//'/restart_data/boundary_conditions'
             call my_inquire(file_loc, dir_check)
             if (dir_check .neqv. .true.) then
                 call s_create_directory(trim(file_loc))
             end if
         end if
+
+        call s_create_mpi_types(bc_type)
+
         call s_mpi_barrier()
 
         call DelayFileAccess(proc_rank)
@@ -233,7 +236,7 @@ contains
                 offset = offset + sizeof(bc_type(dir, loc)%sf)
             end do
         end do
-
+        print*, proc_rank, bc_type(1,-1)%sf(0,:,0)
         ! Write bc_buffers
         do dir = 1, num_dims
             do loc = -1, 1, 2

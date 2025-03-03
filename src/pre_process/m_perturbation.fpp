@@ -620,7 +620,6 @@ contains
         integer :: i, j, k, l, q
 
         do q = 1, elliptic_smoothing_iters
-            !print*, "Iteration: ", i
             if(bcxb >= 0) then
                 call s_mpi_sendrecv_variables_buffers(q_prim_vf, 1, -1)
             else
