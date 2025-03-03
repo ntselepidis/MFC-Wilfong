@@ -2186,10 +2186,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%end, 0, &
+                        mpi_p, bc_x%end, 0, &
                         p_recv, &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%beg, 0, &
+                        mpi_p, bc_x%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr) 
                         !$acc end host_data
                         !$acc end data
@@ -2199,10 +2199,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%end, 0, &
+                        mpi_p, bc_x%end, 0, &
                         q_cons_buff_recv(0), &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%beg, 0, &
+                        mpi_p, bc_x%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)  
                     end if        
 
@@ -2225,10 +2225,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%beg, 1, &
+                        mpi_p, bc_x%beg, 1, &
                         p_recv, &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%beg, 0, &
+                        mpi_p, bc_x%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2238,10 +2238,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%beg, 1, &
+                        mpi_p, bc_x%beg, 1, &
                         q_cons_buff_recv(0), &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%beg, 0, &
+                        mpi_p, bc_x%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if     
                     
@@ -2281,10 +2281,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%beg, 1, &
+                        mpi_p, bc_x%beg, 1, &
                         p_recv, &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%end, 1, &
+                        mpi_p, bc_x%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2294,10 +2294,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%beg, 1, &
+                        mpi_p, bc_x%beg, 1, &
                         q_cons_buff_recv(0), &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%end, 1, &
+                        mpi_p, bc_x%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if
 
@@ -2320,10 +2320,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%end, 0, &
+                        mpi_p, bc_x%end, 0, &
                         p_recv, &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%end, 1, &
+                        mpi_p, bc_x%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2333,10 +2333,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%end, 0, &
+                        mpi_p, bc_x%end, 0, &
                         q_cons_buff_recv(0), &
                         buff_size*(n + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_x%end, 1, &
+                        mpi_p, bc_x%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
 
                     end if     
@@ -2380,10 +2380,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%end, 0, &
+                        mpi_p, bc_y%end, 0, &
                         p_recv, &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%beg, 0, &
+                        mpi_p, bc_y%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2393,10 +2393,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%end, 0, &
+                        mpi_p, bc_y%end, 0, &
                         q_cons_buff_recv(0), &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%beg, 0, &
+                        mpi_p, bc_y%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if
                 else
@@ -2418,10 +2418,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%beg, 1, &
+                        mpi_p, bc_y%beg, 1, &
                         p_recv, &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%beg, 0, &
+                        mpi_p, bc_y%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2431,10 +2431,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%beg, 1, &
+                        mpi_p, bc_y%beg, 1, &
                         q_cons_buff_recv(0), &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%beg, 0, &
+                        mpi_p, bc_y%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if        
                     
@@ -2474,10 +2474,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%beg, 1, &
+                        mpi_p, bc_y%beg, 1, &
                         p_recv, &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%end, 1, &
+                        mpi_p, bc_y%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2487,10 +2487,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%beg, 1, &
+                        mpi_p, bc_y%beg, 1, &
                         q_cons_buff_recv(0), &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%end, 1, &
+                        mpi_p, bc_y%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if     
 
@@ -2513,10 +2513,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%end, 0, &
+                        mpi_p, bc_y%end, 0, &
                         p_recv, &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%end, 1, &
+                        mpi_p, bc_y%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr) 
                         !$acc end host_data
                         !$acc end data
@@ -2526,10 +2526,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%end, 0, &
+                        mpi_p, bc_y%end, 0, &
                         q_cons_buff_recv(0), &
                         buff_size*(m + 2*buff_size + 1)*(p + 1), &
-                        MPI_DOUBLE_PRECISION, bc_y%end, 1, &
+                        mpi_p, bc_y%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if
 
@@ -2572,10 +2572,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%end, 0, &
+                        mpi_p, bc_z%end, 0, &
                         p_recv, &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%beg, 0, &
+                        mpi_p, bc_z%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2585,10 +2585,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%end, 0, &
+                        mpi_p, bc_z%end, 0, &
                         q_cons_buff_recv(0), &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%beg, 0, &
+                        mpi_p, bc_z%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if
 
@@ -2611,10 +2611,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%beg, 1, &
+                        mpi_p, bc_z%beg, 1, &
                         p_recv, &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%beg, 0, &
+                        mpi_p, bc_z%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2624,10 +2624,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%beg, 1, &
+                        mpi_p, bc_z%beg, 1, &
                         q_cons_buff_recv(0), &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%beg, 0, &
+                        mpi_p, bc_z%beg, 0, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if
                     
@@ -2667,10 +2667,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%beg, 1, &
+                        mpi_p, bc_z%beg, 1, &
                         p_recv, &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%end, 1, &
+                        mpi_p, bc_z%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2680,10 +2680,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%beg, 1, &
+                        mpi_p, bc_z%beg, 1, &
                         q_cons_buff_recv(0), &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%end, 1, &
+                        mpi_p, bc_z%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if        
                 else
@@ -2705,10 +2705,10 @@ contains
                         call MPI_SENDRECV( &
                         p_send, &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%end, 0, &
+                        mpi_p, bc_z%end, 0, &
                         p_recv, &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%end, 1, &
+                        mpi_p, bc_z%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                         !$acc end host_data
                         !$acc end data
@@ -2718,10 +2718,10 @@ contains
                         call MPI_SENDRECV( &
                         q_cons_buff_send(0), &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%end, 0, &
+                        mpi_p, bc_z%end, 0, &
                         q_cons_buff_recv(0), &
                         buff_size*(m + 2*buff_size+1)*(n + 2*buff_size +1), &
-                        MPI_DOUBLE_PRECISION, bc_z%end, 1, &
+                        mpi_p, bc_z%end, 1, &
                         MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                     end if       
 

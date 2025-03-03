@@ -1621,12 +1621,6 @@ contains
             !$acc update device(q_cons_ts(1)%vf(i)%sf)
         end do
 
-        do i = 1, num_dims
-            do j = -1, 1, 2
-                !$acc update device(bc_type(i,j)%sf)
-            end do
-        end do
-
         if (qbmm .and. .not. polytropic) then
             !$acc update device(pb_ts(1)%sf, mv_ts(1)%sf)
         end if
