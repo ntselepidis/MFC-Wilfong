@@ -17,11 +17,21 @@ rhoS = 1.862*rhoA
 # velS = 0.475*c_l
 # rhoS = 3.857*rhoA
 
+# M = 10.0
+# pS = 116.5*pA
+# velS = 0.388*c_l
+# rhoS = 5.714*rhoA
+
+# M = 5
+# pS = 29*pA
+# velS = 0.415*c_l
+# rhoS = 5.000*rhoA
+
 leng = 1e-2
 rJet = leng/8
 rC = 2*leng/5
-Ny = 250
-Nx = Ny * 2
+Ny = 400
+Nx = Ny * 4/2.5
 Nz = Ny
 dx = leng / Nx
 
@@ -41,7 +51,7 @@ print(
             "run_time_info": "T",
             # Computational Domain Parameters
             "x_domain%beg": -2 * leng,
-            "x_domain%end": 3 * leng,
+            "x_domain%end": 2 * leng,
             "y_domain%beg": -1.25 * leng,
             "y_domain%end": 1.25 * leng,
             "z_domain%beg": -1.25 * leng,
@@ -53,8 +63,11 @@ print(
             "t_step_start": 0,
             "t_step_stop": Nt,
             "t_step_save": int(Nt / 100.0),
-            # "t_step_stop": 1,
-            # "t_step_save": 1,#int(Nt / 20.0),
+            # "cfl_adap_dt": "T",
+            # "cfl_target": 0.1,
+            # "t_stop": time_end,
+            # "t_save": time_end/100,
+            # "n_start": 0,
             # Simulation Algorithm Parameters
             "num_patches": 1,
             "model_eqns": 2,
@@ -164,7 +177,9 @@ print(
             "fluid_pp(1)%pi_inf": 0.0,
             "fluid_pp(2)%gamma": 1.0e00 / (1.4e00 - 1.0e00),
             "fluid_pp(2)%pi_inf": 0.0,
-
+            "viscous": "T",
+            "fluid_pp(1)%Re(1)": 1.81e5,
+            "fluid_pp(2)%Re(1)": 1.81e5,
         }
     )
 )
