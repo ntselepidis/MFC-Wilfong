@@ -259,8 +259,138 @@ contains
         type(integer_field), dimension(1:num_dims, -1:1) :: bc_type
 
         integer, intent(in) :: patch_id
+        integer :: i, j, k, l
+        if (patch_bc(patch_id)%dir == 1) then
+            y_centroid = patch_bc(patch_id)%centroid(2)
+            z_centroid = patch_bc(patch_id)%centroid(3)
+            length_y = patch_bc(patch_id)%length(2)
+            length_z = patch_bc(patch_id)%length(3)
 
-        ! x-face y-centroid, z-centroid, length y & z
+            y_boundary%beg = y_centroid - 0.5_wp*length_y
+            y_boundary%end = y_centroid + 0.5_wp*length_y
+
+            z_boundary%beg = z_centroid - 0.5_wp*length_z
+            z_boundary%end = z_centroid + 0.5_wp*length_z
+            ! Patch is a circle at x_beg and x_beg is a domain boundary
+            #:for BOUND, X, LOC in [('beg', '-i', -1), ('end', 'm+i', 1)]
+            if (patch_bc(patch_id)%loc == ${LOC}$ .and. bc_x%${BOUND}$ < 0) then
+                do k = 0, p
+                    do j = 0, n
+                        if (y_boundary%beg <= y_cc(j) .and. &
+                            y_boundary%end >= y_cc(j) .and. &
+                            z_boundary%beg <= z_cc(k) .and. &
+                            z_boundary%end >= z_cc(k)) then
+                            bc_type(1,-1)%sf(0,j,k) = patch_bc(patch_id)%type
+                            if (patch_bc(patch_id)%type == -17) then ! Dirichlet BC
+                                do i = 1, buff_size
+                                    ! Velocities
+                                    do l = 1, num_dims
+                                        q_prim_vf(momxb+l-1)%sf(${X}$,j,k) = patch_bc(patch_id)%vel(l)
+                                    end do
+
+                                    ! Density and volume fraction
+                                    do l = 1, num_fluids
+                                        q_prim_vf(l)%sf(${X}$,j,k) = patch_bc(patch_id)%alpha_rho(l)
+                                        q_prim_vf(advxb+l-1)%sf(${X}$,j,k) = patch_bc(patch_id)%alpha(l)
+                                    end do
+
+                                    ! Pressure
+                                    q_prim_vf(E_idx)%sf(${X}$,j,k) = patch_bc(patch_id)%pres
+                                end do
+                            end if
+                        end if
+                    end do
+                end do
+            end if
+            #:endfor
+        end if  
+        if (patch_bc(patch_id)%dir == 2) then
+            x_centroid = patch_bc(patch_id)%centroid(1)
+            z_centroid = patch_bc(patch_id)%centroid(3)
+            length_x = patch_bc(patch_id)%length(1)
+            length_z = patch_bc(patch_id)%length(3)
+
+            x_boundary%beg = x_centroid - 0.5_wp*length_x
+            x_boundary%end = x_centroid + 0.5_wp*length_x
+
+            z_boundary%beg = z_centroid - 0.5_wp*length_z
+            z_boundary%end = z_centroid + 0.5_wp*length_z
+            ! Patch is a circle at y_beg and y_beg is a domain boundary
+            #:for BOUND, Y, LOC in [('beg', '-i', -1), ('end', 'n+i', 1)]
+            if (patch_bc(patch_id)%loc == ${LOC}$ .and. bc_y%${BOUND}$ < 0) then
+                do k = 0, p
+                    do j = 0, m
+                        if (x_boundary%beg <= x_cc(j) .and. &
+                            x_boundary%end >= x_cc(j) .and. &
+                            z_boundary%beg <= z_cc(k) .and. &
+                            z_boundary%end >= z_cc(k)) then
+                            bc_type(2,-1)%sf(j,0,k) = patch_bc(patch_id)%type
+                            if (patch_bc(patch_id)%type == -17) then ! Dirichlet BC
+                                do i = 1, buff_size
+                                    ! Velocities
+                                    do l = 1, num_dims
+                                        q_prim_vf(momxb+l-1)%sf(j,${Y}$,k) = patch_bc(patch_id)%vel(l)
+                                    end do
+
+                                    ! Density and volume fraction
+                                    do l = 1, num_fluids
+                                        q_prim_vf(l)%sf(j,${Y}$,k) = patch_bc(patch_id)%alpha_rho(l)
+                                        q_prim_vf(advxb+l-1)%sf(j,${Y}$,k) = patch_bc(patch_id)%alpha(l)
+                                    end do
+
+                                    ! Pressure
+                                    q_prim_vf(E_idx)%sf(j,${Y}$,k) = patch_bc(patch_id)%pres
+                                end do
+                            end if
+                        end if
+                    end do
+                end do
+            end if
+            #:endfor
+        end if
+        if (patch_bc(patch_id)%dir == 3) then
+            x_centroid = patch_bc(patch_id)%centroid(1)
+            y_centroid = patch_bc(patch_id)%centroid(2)
+            length_x = patch_bc(patch_id)%length(1)
+            length_y = patch_bc(patch_id)%length(2)
+
+            x_boundary%beg = x_centroid - 0.5_wp*length_x
+            x_boundary%end = x_centroid + 0.5_wp*length_x
+
+            y_boundary%beg = y_centroid - 0.5_wp*length_y
+            y_boundary%end = y_centroid + 0.5_wp*length_y
+            #:for BOUND, Z, LOC in [('beg', '-i', -1), ('end', 'p+i', 1)]
+            if (patch_bc(patch_id)%loc == ${LOC}$ .and. bc_z%${BOUND}$ < 0) then
+                do k = 0, n
+                    do j = 0, m 
+                        if (x_boundary%beg <= x_cc(j) .and. &
+                            x_boundary%end >= x_cc(j) .and. &
+                            y_boundary%beg <= y_cc(k) .and. &
+                            y_boundary%end >= y_cc(k)) then
+                            bc_type(3,-1)%sf(j,k,0) = patch_bc(patch_id)%type
+                            if (patch_bc(patch_id)%type == -17) then ! Dirichlet BC
+                                do i = 1, buff_size
+                                    ! Velocities
+                                    do l = 1, num_dims
+                                        q_prim_vf(momxb+l-1)%sf(j,k,${Z}$) = patch_bc(patch_id)%vel(l)
+                                    end do
+
+                                    ! Density and volume fraction
+                                    do l = 1, num_fluids
+                                        q_prim_vf(l)%sf(j,k,${Z}$) = patch_bc(patch_id)%alpha_rho(l)
+                                        q_prim_vf(advxb+l-1)%sf(j,k,${Z}$) = patch_bc(patch_id)%alpha(l)
+                                    end do
+
+                                    ! Pressure
+                                    q_prim_vf(E_idx)%sf(j,k,${Z}$) = patch_bc(patch_id)%pres
+                                end do
+                            end if
+                        end if
+                    end do
+                end do
+            end if
+            #:endfor
+        end if
 
     end subroutine s_rectangle_bc
 
