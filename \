@@ -475,8 +475,6 @@ contains
 
         end do
 
-        !call s_print_2d_array(jac(:,:,0))
-
     end subroutine s_igr_jacobi_iteration
 
     subroutine s_compute_mixture(rho_L, rho_R, gamma_L, gamma_R, pi_inf_L, pi_inf_R, &

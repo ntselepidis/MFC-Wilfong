@@ -435,7 +435,7 @@ contains
 
         character(LEN=*), intent(in) :: step_dirpath
 
-        integer :: dir, loc
+        integer :: dir, loc, i
         character(len=path_len) :: file_path
 
         character(len=10) :: status
@@ -465,6 +465,10 @@ contains
             end do
         end do
         close (1)
+
+        do i = 1, n
+            print("(I,4F10.2)"), bc_type(1,-1)%sf(0,i,0), bc_buffers(1,-1)%sf(E_idx,i,0)
+        end do
 
     end subroutine s_write_serial_boundary_condition_files
 
@@ -571,7 +575,7 @@ contains
         do k = 0, p
             do j = 0, n
                 do i = 1, sys_size
-                    bc_buffers(1,-1)%sf(i,j,k) = q_prim_vf(i)%sf(-1,j,k)
+                    bc_buffers(1,-1)%sf(i,j,k) = q_prim_vf(i)%sf(0,j,k)
                     bc_buffers(1,1)%sf(i,j,k) = q_prim_vf(i)%sf(m+1,j,k)
                 end do
             end do

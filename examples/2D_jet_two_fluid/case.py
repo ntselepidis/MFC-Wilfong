@@ -9,16 +9,19 @@ c_l = math.sqrt(1.4 * pA / rhoA)
 
 M = 1.5
 pS = 2.458*pA
-velS = 0.701*c_l
+velS = 1.5*c_l
 rhoS = 1.862*rhoA
+# pS = pA
+# velS = 1.5*c_l
+# rhoS = rhoA
 
 # M = 3.0
 # pS = 10.333*pA
 # velS = 0.475*c_l
 # rhoS = 3.857*rhoA
 
-leng = 1e-2
-Ny = 4000
+leng = 2
+Ny = 250
 Nx = Ny * 1
 dx = leng / Nx
 
@@ -47,11 +50,11 @@ print(
             "dt": dt,
             "t_step_start": 0,
             "t_step_stop": Nt,
-            "t_step_save": int(Nt / 100.0),
-            # "t_step_stop": 1,
+            "t_step_save": int(Nt / 20.0),
+            # "t_step_stop": 400,
             # "t_step_save": 1,#int(Nt / 20.0),
             # Simulation Algorithm Parameters
-            "num_patches": 1,
+            "num_patches": 3,
             "model_eqns": 2,
             "alt_soundspeed": "F",
             "num_fluids": 2,
@@ -68,112 +71,37 @@ print(
             "riemann_solver": 2,
             "wave_speeds": 1,
             "avg_state": 2,
-            # "igr": "T",
-            # "alf_igr": 10,
+            "igr": "T",
+            "alf_igr": 15,
             "elliptic_smoothing": "T",
-            "elliptic_smoothing_iters": 25,
+            "elliptic_smoothing_iters": 250,
 
-            "bc_x%beg": -2,
+            "bc_x%beg": -16,
             "bc_x%end": -3,
-            "bc_y%beg": -1,
-            "bc_y%end": -1,
+            "bc_y%beg": -3,
+            "bc_y%end": -3,
 
-            "num_bc_patches": 3,
+            "num_bc_patches": 1,
             # Top jet inlet at left side of domain
             "patch_bc(1)%dir": 1,
             "patch_bc(1)%loc": -1,
             "patch_bc(1)%geometry": 1,
             "patch_bc(1)%type": -17,
-            "patch_bc(1)%centroid(2)": leng,
-            "patch_bc(1)%length(2)": leng/8,
-            "patch_bc(1)%vel(1)": velS,
-            "patch_bc(1)%vel(2)": 0,
-            "patch_bc(1)%pres": pS,
-            "patch_bc(1)%alpha_rho(1)": rhoS,
-            "patch_bc(1)%alpha(1)": 1.0 - eps,
-            "patch_bc(1)%alpha_rho(2)": eps,
-            "patch_bc(1)%alpha(2)": eps,
+            "patch_bc(1)%centroid(2)": 0,
+            "patch_bc(1)%length(2)": 1000*leng/8,
 
-            # Bottom jet inlet at left side of domain
-            "patch_bc(2)%dir": 1,
-            "patch_bc(2)%loc": -1,
-            "patch_bc(2)%geometry": 1,
-            "patch_bc(2)%type": -17,
-            "patch_bc(2)%centroid(2)": -leng,
-            "patch_bc(2)%length(2)": leng/8,
-            "patch_bc(2)%vel(1)": velS,
-            "patch_bc(2)%vel(2)": 0,
-            "patch_bc(2)%pres": pS,
-            "patch_bc(2)%alpha_rho(1)": rhoS,
-            "patch_bc(2)%alpha(1)": 1.0 - eps,
-            "patch_bc(2)%alpha_rho(2)": eps,
-            "patch_bc(2)%alpha(2)": eps,
-
-            # middle jet inlet at left side of domain
-            "patch_bc(3)%dir": 1,
-            "patch_bc(3)%loc": -1,
-            "patch_bc(3)%geometry": 1,
-            "patch_bc(3)%type": -17,
-            "patch_bc(3)%centroid(2)": 0,
-            "patch_bc(3)%length(2)": leng/8,
-            "patch_bc(3)%vel(1)": velS,
-            "patch_bc(3)%vel(2)": 0,
-            "patch_bc(3)%pres": pS,
-            "patch_bc(3)%alpha_rho(1)": rhoS,
-            "patch_bc(3)%alpha(1)": 1.0 - eps,
-            "patch_bc(3)%alpha_rho(2)": eps,
-            "patch_bc(3)%alpha(2)": eps,
-
-            # Bottom jet inlet at right side of domain
-            # "patch_bc(4)%dir": 1,
-            # "patch_bc(4)%loc": 1,
-            # "patch_bc(4)%geometry": 1,
-            # "patch_bc(4)%type": -17,
-            # "patch_bc(4)%centroid(2)": -leng,
-            # "patch_bc(4)%length(2)": leng/8,
-            # "patch_bc(4)%vel(1)": -velS,
-            # "patch_bc(4)%vel(2)": 0,
-            # "patch_bc(4)%pres": pS,
-            # "patch_bc(4)%alpha_rho(1)": rhoS,
-            # "patch_bc(4)%alpha(1)": 1.0 - eps,
-            # "patch_bc(4)%alpha_rho(2)": eps,
-            # "patch_bc(4)%alpha(2)": eps,
-
-            # top jet inlet at right side of domain
-            # "patch_bc(5)%dir": 1,
-            # "patch_bc(5)%loc": 1,
-            # "patch_bc(5)%geometry": 1,
-            # "patch_bc(5)%type": -17,
-            # "patch_bc(5)%centroid(2)": leng,
-            # "patch_bc(5)%length(2)": leng/8,
-            # "patch_bc(5)%vel(1)": -velS,
-            # "patch_bc(5)%vel(2)": 0,
-            # "patch_bc(5)%pres": pS,
-            # "patch_bc(5)%alpha_rho(1)": rhoS,
-            # "patch_bc(5)%alpha(1)": 1.0 - eps,
-            # "patch_bc(5)%alpha_rho(2)": eps,
-            # "patch_bc(5)%alpha(2)": eps,
-
-            # middle jet inlet at right side of domain
-            # "patch_bc(6)%dir": 1,
-            # "patch_bc(6)%loc": 1,
-            # "patch_bc(6)%geometry": 1,
-            # "patch_bc(6)%type": -17,
-            # "patch_bc(6)%centroid(2)": 0,
-            # "patch_bc(6)%length(2)": leng/8,
-            # "patch_bc(6)%vel(1)": -velS,
-            # "patch_bc(6)%vel(2)": 0,
-            # "patch_bc(6)%pres": pS,
-            # "patch_bc(6)%alpha_rho(1)": rhoS,
-            # "patch_bc(6)%alpha(1)": 1.0 - eps,
-            # "patch_bc(6)%alpha_rho(2)": eps,
-            # "patch_bc(6)%alpha(2)": eps,
+            # "patch_bc(2)%dir": 1,
+            # "patch_bc(2)%loc": -1,
+            # "patch_bc(2)%geometry": 1,
+            # "patch_bc(2)%type": -17,
+            # "patch_bc(2)%centroid(2)": 0,
+            # "patch_bc(2)%length(2)": 5*leng/8,
 
             # Formatted Database Files Structure Parameters
             "format": 1,
             "precision": 2,
             "prim_vars_wrt": "T",
-            "parallel_io": "T",
+            "parallel_io": "F",
             # "file_per_process": "T",
 
             # Patch 1: Background
@@ -182,7 +110,7 @@ print(
             "patch_icpp(1)%y_centroid": 0.0,
             "patch_icpp(1)%length_x": 8 * leng,
             "patch_icpp(1)%length_y": 4 * leng,
-            "patch_icpp(1)%vel(1)": 0.0e00,
+            "patch_icpp(1)%vel(1)": 10.0e00,
             "patch_icpp(1)%vel(2)": 0.0e00,
             "patch_icpp(1)%pres": pA,
             "patch_icpp(1)%alpha_rho(1)": eps*rhoA,
@@ -190,18 +118,35 @@ print(
             "patch_icpp(1)%alpha_rho(2)": (1-eps)*rhoA,
             "patch_icpp(1)%alpha(2)": 1.0-eps,
 
+            "patch_icpp(2)%geometry": 3,
+            "patch_icpp(2)%alter_patch(1)": "T",
+            "patch_icpp(2)%x_centroid": -2*leng,
+            "patch_icpp(2)%y_centroid": 0.0,
+            "patch_icpp(2)%length_x": leng/4,
+            "patch_icpp(2)%length_y": 4 * leng,
+            "patch_icpp(2)%vel(1)": 10,
+            "patch_icpp(2)%vel(2)": 0.0e00,
+            "patch_icpp(2)%pres": pS,
+            "patch_icpp(2)%alpha_rho(1)": eps*rhoA,
+            "patch_icpp(2)%alpha(1)": eps,
+            "patch_icpp(2)%alpha_rho(2)": (1-eps)*rhoA,
+            "patch_icpp(2)%alpha(2)": 1.0-eps,
+
             # Patch 2: Shocked state
-            # "patch_icpp(2)%geometry": 3,
-            # "patch_icpp(2)%alter_patch(1)": "T",
-            # "patch_icpp(2)%x_centroid": -1 * leng / 2,
-            # "patch_icpp(2)%y_centroid": 0.0,
-            # "patch_icpp(2)%length_x": leng / 8,
-            # "patch_icpp(2)%length_y": leng/8,
-            # "patch_icpp(2)%vel(1)": velS,
-            # "patch_icpp(2)%vel(2)": 0.0e00,
-            # "patch_icpp(2)%pres": pS,
-            # "patch_icpp(2)%alpha_rho(1)": rhoS,
-            # "patch_icpp(2)%alpha(1)": 1,
+            "patch_icpp(3)%geometry": 3,
+            "patch_icpp(3)%alter_patch(1)": "T",
+            "patch_icpp(3)%alter_patch(2)": "T",
+            "patch_icpp(3)%x_centroid": -2 * leng,
+            "patch_icpp(3)%y_centroid": 0.0,
+            "patch_icpp(3)%length_x": leng / 4,
+            "patch_icpp(3)%length_y": leng / 2,
+            "patch_icpp(3)%vel(1)": velS,
+            "patch_icpp(3)%vel(2)": 0.0e00,
+            "patch_icpp(3)%pres": pS,
+            "patch_icpp(3)%alpha_rho(1)": rhoS,
+            "patch_icpp(3)%alpha(1)": (1-eps),
+            "patch_icpp(3)%alpha_rho(2)": eps,
+            "patch_icpp(3)%alpha(2)": eps,
 
             # Fluids Physical Parameters
             "fluid_pp(1)%gamma": 1.0e00 / (1.4e00 - 1.0e00),
