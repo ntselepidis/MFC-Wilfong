@@ -638,7 +638,6 @@ contains
                                 end do
                             end do
                         elseif (bc_type(1,-1)%sf(0,k,l) >= -17) then
-                            print*, k
                             do j = 1, buff_size
                                 do i = 1, sys_size
                                     q_prim_vf(i)%sf(-j, k, l) = q_prim_vf(i)%sf(0,k,l)

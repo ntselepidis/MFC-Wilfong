@@ -1565,6 +1565,7 @@ contains
         else
             alf_igr = alf_factor*max(dx(1), dy(1), dz(1))**2._wp
         end if
+        alf_igr = alf_factor
         !$acc update device(alf_igr)
 
         omega = 1.0_wp

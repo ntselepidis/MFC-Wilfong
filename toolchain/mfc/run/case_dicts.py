@@ -93,7 +93,6 @@ PRE_PROCESS.update({
     'n_start_old': ParamType.INT,
     'surface_tension': ParamType.LOG,
     'igr':ParamType.LOG,
-    'alf_igr':ParamType.INT,
     'elliptic_smoothing':ParamType.LOG,
     'elliptic_smoothing_iters':ParamType.INT,
     'num_bc_patches':ParamType.INT,
@@ -294,6 +293,7 @@ SIMULATION.update({
     'igr': ParamType.LOG,
     'igr_order': ParamType.INT,
     'alf_factor': ParamType.REAL,
+    'num_igr_iters': ParamType.INT,
 })
 
 for var in [ 'heatTransfer_model', 'massTransfer_model', 'pressure_corrector',

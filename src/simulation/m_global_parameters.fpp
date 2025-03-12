@@ -154,6 +154,7 @@ module m_global_parameters
     logical :: bulk_stress   !< Bulk stresses
     logical :: igr           !< Use information geometric regularization
     real(wp) :: alf_factor  !< alpha factor for IGR
+    integer :: num_igr_iters 
 
     !$acc declare create(chemistry, igr)
 
@@ -545,6 +546,7 @@ contains
         shear_stress = .false.
         bulk_stress = .false.
         igr = .false.
+        num_igr_iters = 2
 
         #:if not MFC_CASE_OPTIMIZATION
             mapped_weno = .false.
