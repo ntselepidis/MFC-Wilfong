@@ -130,7 +130,7 @@ contains
 
     ! WENO like reconstructions using only the optimial weights as given in
     ! Balsara & Shu (1999)
-    subroutine s_reconstruct_igr(qL, qR, q_prim, idir)
+    subroutine s_reconstruct_igr(qR, qL, q_prim, idir)
 
         real(wp), &
             dimension(idwbuff(1)%beg:,idwbuff(2)%beg:,idwbuff(3)%beg:), &
@@ -143,6 +143,7 @@ contains
                 do l = 0, 0
                     do k = idwbuff(2)%beg + 2, idwbuff(2)%end - 2
                         do j = idwbuff(1)%beg + 2, idwbuff(1)%end - 2
+#if 0
                             qL(j, k, l) = (1._wp/60._wp) * (-3._wp * q_prim(j-2, k, l) + &
                                                         27._wp * q_prim(j-1, k, l) + &
                                                         47._wp * q_prim(j, k, l) -   &
@@ -153,6 +154,10 @@ contains
                                                         47._wp * q_prim(j, k, l) -   &
                                                         13._wp * q_prim(j-1, k, l) + &
                                                         2._wp * q_prim(j-2, k, l))
+#else
+                            qL(j,k,l) = q_prim(j,k,l)
+                            qR(j,k,l) = q_prim(j,k,l)
+#endif
                         end do
                     end do
                 end do
@@ -181,6 +186,7 @@ contains
                 do l = idwbuff(3)%beg + 2, idwbuff(3)%end - 2
                     do k = idwbuff(2)%beg + 2, idwbuff(2)%end - 2
                         do j = idwbuff(1)%beg + 2, idwbuff(1)%end - 2
+#ifdef 0
                             qL(j, k, l) = (1._wp/60._wp) * (-3._wp * q_prim(j-2, k, l) + &
                                                         27._wp * q_prim(j-1, k, l) + &
                                                         47._wp * q_prim(j, k, l) -   &
@@ -191,6 +197,11 @@ contains
                                                         47._wp * q_prim(j, k, l) -   &
                                                         13._wp * q_prim(j-1, k, l) + &
                                                         2._wp * q_prim(j-2, k, l))
+#else
+                            qL(j,k,l) = q_prim(j,k,l)
+                            qR(j,k,l) = q_prim(j,k,l)
+#endif
+
                         end do
                     end do
                 end do
@@ -241,7 +252,13 @@ contains
         real(wp) :: resid
         integer :: num_iters, t_step
 
-        num_iters = num_igr_iters
+        !if (t_step < 100) then
+            !num_iters = 100 + num_igr_iters - t_step
+        !else
+            !num_iters = num_igr_iters
+        !end if
+
+        num_iters = 2
 
         do q = 1, num_iters
             !$acc parallel loop collapse(3) gang vector default(present) private(rho_lx, rho_rx, rho_ly, rho_ry, rho_lz, rho_rz)
@@ -269,207 +286,194 @@ contains
                 end do
             end do
 
-            if(bcxb >= -12) then
-                if(bcxb >= 0) then
-                    call s_mpi_sendrecv_F_igr(jac, 1, -1)
-                else if (bcxb == -1) then
-                    !$acc parallel loop gang vector collapse(3) default(present)
-                    do l = 0, p
-                        do k = 0, n
-                            do j = 1, buff_size
-                                jac(-j, k, l) = jac(m-j+1,k,l)
-                            end do
+            if(bcxb >= 0) then
+                call s_mpi_sendrecv_F_igr(jac, 1, -1)
+            else if (bcxb == -1) then
+                !$acc parallel loop gang vector collapse(3) default(present)
+                do l = 0, p
+                    do k = 0, n
+                        do j = 1, buff_size
+                            jac(-j, k, l) = jac(m-j+1,k,l)
                         end do
                     end do
-                else if (bcxb == -2) then
-                    !$acc parallel loop gang vector collapse(3) default(present)
-                    do l = 0, p
-                        do k = 0, n
-                            do j = 1, buff_size
-                                jac(-j, k, l) = jac(j - 1,k,l)
-                            end do
+                end do
+            else if (bcxb == -2) then
+                !$acc parallel loop gang vector collapse(3) default(present)
+                do l = 0, p
+                    do k = 0, n
+                        do j = 1, buff_size
+                            jac(-j, k, l) = jac(j - 1,k,l)
                         end do
                     end do
-                else
-                    !$acc parallel loop gang vector collapse(3) default(present)
-                    do l = 0, p
-                        do k = 0, n
-                            do j = 1, buff_size
-                                jac(-j, k, l) = jac(0,k,l)
-                            end do
+                end do
+            else
+                !$acc parallel loop gang vector collapse(3) default(present)
+                do l = 0, p
+                    do k = 0, n
+                        do j = 1, buff_size
+                            jac(-j, k, l) = jac(0,k,l)
                         end do
                     end do
-
-                end if
+                end do
             end if
 
-            if(bcxe >= -12) then
-                if(bcxe >= 0) then
-                    call s_mpi_sendrecv_F_igr(jac, 1, 1)
-                else if (bcxe == -1) then
-                    !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 0, n
-                            do j = 1, buff_size
-                                jac(m+j, k, l) = jac(j-1,k,l)
-                            end do
+            if(bcxe >= 0) then
+                call s_mpi_sendrecv_F_igr(jac, 1, 1)
+            else if (bcxe == -1) then
+                !$acc parallel loop collapse(3) gang vector default(present)
+                do l = 0, p
+                    do k = 0, n
+                        do j = 1, buff_size
+                            jac(m+j, k, l) = jac(j-1,k,l)
                         end do
                     end do
-                else if (bcxe == -2) then
-                    !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 0, n
-                            do j = 1, buff_size
-                                jac(m+j, k, l) = jac(m - (j - 1),k,l)
-                            end do
+                end do
+            else if (bcxe == -2) then
+                !$acc parallel loop collapse(3) gang vector default(present)
+                do l = 0, p
+                    do k = 0, n
+                        do j = 1, buff_size
+                            jac(m+j, k, l) = jac(m - (j - 1),k,l)
                         end do
                     end do
-                else
-                    !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 0, n
-                            do j = 1, buff_size
-                                jac(m+j, k, l) = jac(m,k,l)
-                            end do
+                end do
+            else
+                !$acc parallel loop collapse(3) gang vector default(present)
+                do l = 0, p
+                    do k = 0, n
+                        do j = 1, buff_size
+                            jac(m+j, k, l) = jac(m,k,l)
                         end do
                     end do
-                end if
+                end do
             end if
 
-            if(bcyb >= -12) then
-                if(bcyb >= 0) then
-                    call s_mpi_sendrecv_F_igr(jac, 2, -1)
-                else if (bcyb == -1) then
-                    !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 1, buff_size
-                            do j = idwbuff(1)%beg, idwbuff(1)%end
-                                jac(j,-k,l) = jac(j,n-k+1,l)
-                            end do
+            if(bcyb >= 0) then
+                call s_mpi_sendrecv_F_igr(jac, 2, -1)
+            else if (bcyb == -1) then
+                !$acc parallel loop collapse(3) gang vector default(present)
+                do l = 0, p
+                    do k = 1, buff_size
+                        do j = idwbuff(1)%beg, idwbuff(1)%end
+                            jac(j,-k,l) = jac(j,n-k+1,l)
                         end do
                     end do
-                else if (bcyb == -2) then
-                    !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 1, buff_size
-                            do j = idwbuff(1)%beg, idwbuff(1)%end
-                                jac(j,-k,l) = jac(j,k-1,l)
-                            end do
+                end do
+            else if (bcyb == -2) then
+                !$acc parallel loop collapse(3) gang vector default(present)
+                do l = 0, p
+                    do k = 1, buff_size
+                        do j = idwbuff(1)%beg, idwbuff(1)%end
+                            jac(j,-k,l) = jac(j,k-1,l)
                         end do
                     end do
-                else
-                    !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 1, buff_size
-                            do j = idwbuff(1)%beg, idwbuff(1)%end
-                                jac(j,-k,l) = jac(j,0,l)
-                            end do
+                end do
+            else
+                !$acc parallel loop collapse(3) gang vector default(present)
+                do l = 0, p
+                    do k = 1, buff_size
+                        do j = idwbuff(1)%beg, idwbuff(1)%end
+                            jac(j,-k,l) = jac(j,0,l)
                         end do
                     end do
-                end if
+                end do
             end if
 
-            if(bcye >= -12) then
-                if(bcye >= 0) then
-                    call s_mpi_sendrecv_F_igr(jac, 2, 1)
-                else if (bcye == -1) then
-                    !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 1, buff_size
-                            do j = idwbuff(1)%beg, idwbuff(1)%end
-                                jac(j,n+k,l) = jac(j,k-1,l)
-                            end do
+            if(bcye >= 0) then
+                call s_mpi_sendrecv_F_igr(jac, 2, 1)
+            else if (bcye == -1) then
+                !$acc parallel loop collapse(3) gang vector default(present)
+                do l = 0, p
+                    do k = 1, buff_size
+                        do j = idwbuff(1)%beg, idwbuff(1)%end
+                            jac(j,n+k,l) = jac(j,k-1,l)
                         end do
                     end do
-                else if (bcye == -2) then
-                    !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 1, buff_size
-                            do j = idwbuff(1)%beg, idwbuff(1)%end
-                                jac(j,n+k,l) = jac(j,n - (k-1),l)
-                            end do
+                end do
+            else if (bcye == -2) then
+                !$acc parallel loop collapse(3) gang vector default(present)
+                do l = 0, p
+                    do k = 1, buff_size
+                        do j = idwbuff(1)%beg, idwbuff(1)%end
+                            jac(j,n+k,l) = jac(j,n - (k-1),l)
                         end do
                     end do
-                else
-                    !$acc parallel loop collapse(3) gang vector default(present)
-                    do l = 0, p
-                        do k = 1, buff_size
-                            do j = idwbuff(1)%beg, idwbuff(1)%end
-                                jac(j,n+k,l) = jac(j,n,l)
-                            end do
+                end do
+            else
+                !$acc parallel loop collapse(3) gang vector default(present)
+                do l = 0, p
+                    do k = 1, buff_size
+                        do j = idwbuff(1)%beg, idwbuff(1)%end
+                            jac(j,n+k,l) = jac(j,n,l)
                         end do
                     end do
-
-                end if
+                end do
             end if
 
             if(p > 0) then
-                if(bczb >= -12) then
-                    if(bczb >= 0) then
-                        call s_mpi_sendrecv_F_igr(jac, 3, -1)
-                    else if (bczb == -1) then
-                        !$acc parallel loop collapse(3) gang vector default(present)
-                        do l = 1, buff_size
-                            do k = idwbuff(2)%beg, idwbuff(2)%end
-                                do j = idwbuff(1)%beg, idwbuff(1)%end
-                                    jac(j,k,-l) = jac(j,k,p-l+1)
-                                end do
+                if(bczb >= 0) then
+                    call s_mpi_sendrecv_F_igr(jac, 3, -1)
+                else if (bczb == -1) then
+                    !$acc parallel loop collapse(3) gang vector default(present)
+                    do l = 1, buff_size
+                        do k = idwbuff(2)%beg, idwbuff(2)%end
+                            do j = idwbuff(1)%beg, idwbuff(1)%end
+                                jac(j,k,-l) = jac(j,k,p-l+1)
                             end do
                         end do
-                    else if (bczb == -2) then
-                        !$acc parallel loop collapse(3) gang vector default(present)
-                        do l = 1, buff_size
-                            do k = idwbuff(2)%beg, idwbuff(2)%end
-                                do j = idwbuff(1)%beg, idwbuff(1)%end
-                                    jac(j,k,-l) = jac(j,k,l-1)
-                                end do
+                    end do
+                else if (bczb == -2) then
+                    !$acc parallel loop collapse(3) gang vector default(present)
+                    do l = 1, buff_size
+                        do k = idwbuff(2)%beg, idwbuff(2)%end
+                            do j = idwbuff(1)%beg, idwbuff(1)%end
+                                jac(j,k,-l) = jac(j,k,l-1)
                             end do
                         end do
-                    else
-                        !$acc parallel loop collapse(3) gang vector default(present)
-                        do l = 1, buff_size
-                            do k = idwbuff(2)%beg, idwbuff(2)%end
-                                do j = idwbuff(1)%beg, idwbuff(1)%end
-                                    jac(j,k,-l) = jac(j,k,0)
-                                end do
+                    end do
+                else
+                    !$acc parallel loop collapse(3) gang vector default(present)
+                    do l = 1, buff_size
+                        do k = idwbuff(2)%beg, idwbuff(2)%end
+                            do j = idwbuff(1)%beg, idwbuff(1)%end
+                                jac(j,k,-l) = jac(j,k,0)
                             end do
                         end do
-
-                    end if
+                    end do
                 end if
+            end if
 
-                if(bcze >= -12) then
-                    if(bcze >= 0) then
-                        call s_mpi_sendrecv_F_igr(jac, 3, 1)
-                    else if (bcze == -1) then
-                        !$acc parallel loop gang vector collapse(3) default(present)
-                        do l = 1, buff_size
-                            do k = idwbuff(2)%beg, idwbuff(2)%end
-                                do j = idwbuff(1)%beg, idwbuff(1)%end
-                                    jac(j,k,p+l) = jac(j,k,l-1)
-                                end do
+            if(bcze >= -12) then
+                if(bcze >= 0) then
+                    call s_mpi_sendrecv_F_igr(jac, 3, 1)
+                else if (bcze == -1) then
+                    !$acc parallel loop gang vector collapse(3) default(present)
+                    do l = 1, buff_size
+                        do k = idwbuff(2)%beg, idwbuff(2)%end
+                            do j = idwbuff(1)%beg, idwbuff(1)%end
+                                jac(j,k,p+l) = jac(j,k,l-1)
                             end do
                         end do
-                    else if (bcze == -2) then
-                        !$acc parallel loop gang vector collapse(3) default(present)
-                        do l = 1, buff_size
-                            do k = idwbuff(2)%beg, idwbuff(2)%end
-                                do j = idwbuff(1)%beg, idwbuff(1)%end
-                                    jac(j,k,p+l) = jac(j,k,p - (l-1))
-                                end do
+                    end do
+                else if (bcze == -2) then
+                    !$acc parallel loop gang vector collapse(3) default(present)
+                    do l = 1, buff_size
+                        do k = idwbuff(2)%beg, idwbuff(2)%end
+                            do j = idwbuff(1)%beg, idwbuff(1)%end
+                                jac(j,k,p+l) = jac(j,k,p - (l-1))
                             end do
                         end do
-                    else
-                        !$acc parallel loop gang vector collapse(3) default(present)
-                        do l = 1, buff_size
-                            do k = idwbuff(2)%beg, idwbuff(2)%end
-                                do j = idwbuff(1)%beg, idwbuff(1)%end
-                                    jac(j,k,p+l) = jac(j,k,p)
-                                end do
+                    end do
+                else
+                    !$acc parallel loop gang vector collapse(3) default(present)
+                    do l = 1, buff_size
+                        do k = idwbuff(2)%beg, idwbuff(2)%end
+                            do j = idwbuff(1)%beg, idwbuff(1)%end
+                                jac(j,k,p+l) = jac(j,k,p)
                             end do
                         end do
+                    end do
 
-                    end if
                 end if
             end if
 
@@ -483,6 +487,8 @@ contains
             end do
 
         end do
+
+        !call s_print_2d_array(jac(:,:,0))
 
     end subroutine s_igr_jacobi_iteration
 
@@ -624,12 +630,12 @@ contains
                                  qL_rs_vf(j+1,k,l,E_idx) + FL(j+1, k, l) ) + &
                                  0.5_wp* (rho_R * (qR_rs_vf(j,k,l,momxb)**2.0) + &
                                  qR_rs_vf(j,k,l,E_idx) + FR(j, k, l) ) + &
-                                 0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j+1, k, l, momxb)*rho_L)
+                                 0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb) - qL_rs_vf(j+1, k, l, momxb))
 
                             flux_vf(momxb+1)%sf(j, k, l) =  &
                                 0.5_wp * rho_L * qL_rs_vf(j+1,k,l,momxb)*qL_rs_vf(j+1,k,l,momxb+1) + &
                                 0.5_wp * rho_R * qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j+1, k, l, momxb+1)*rho_L)
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1) - qL_rs_vf(j+1, k, l, momxb+1))
 
                              flux_vf(E_idx)%sf(j, k, l) = &
                                 0.5_wp * (qL_rs_vf(j+1,k,l,momxb) * (qL_rs_vf(j+1,k,l,E_idx)*gamma_L + pi_inf_L + &
@@ -638,7 +644,7 @@ contains
                                 0.5_wp * (qR_rs_vf(j,k,l,momxb) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
                                 0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
                                 qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp) - qL_rs_vf(j+1, k, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp))
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx) - qL_rs_vf(j+1, k, l, E_idx))
 
                             if(viscous) then
                                 mu_L = 1/Re_L; mu_R = 1/Re_R
@@ -717,12 +723,12 @@ contains
                             flux_vf(momxb+1)%sf(j, k, l) = &
                                 0.5_wp * rho_L * (qL_rs_vf(j+1,k,l,momxb)*qL_rs_vf(j+1,k,l,momxb+1)) + &
                                 0.5_wp * rho_R * (qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1)) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j+1, k, l, momxb+1)*rho_L)
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1) - qL_rs_vf(j+1, k, l, momxb+1))
 
                             flux_vf(momxe)%sf(j, k, l) = &
                                 0.5_wp * rho_L * (qL_rs_vf(j+1,k,l,momxb)*qL_rs_vf(j+1,k,l,momxe)) + &
                                 0.5_wp*  rho_R * (qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxe)) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxe)*rho_R - qL_rs_vf(j+1, k, l, momxe)*rho_L)
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxe) - qL_rs_vf(j+1, k, l, momxe))
 
                             flux_vf(E_idx)%sf(j, k, l) = &
                                 0.5_wp * ( qL_rs_vf(j+1,k,l,momxb) * (qL_rs_vf(j+1,k,l,E_idx)*gamma_L + pi_inf_L + &
@@ -731,7 +737,7 @@ contains
                                 0.5_wp * ( qR_rs_vf(j,k,l,momxb) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
                                 0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp + qR_rs_vf(j, k, l,momxe)**2._wp) + &
                                 qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp + qR_rs_vf(j, k, l,momxe)**2._wp) - qL_rs_vf(j+1, k, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp + qL_rs_vf(j+1, k, l,momxe)**2._wp))
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx) - qL_rs_vf(j+1, k, l, E_idx))
 
                             if(viscous) then
                                 mu_L = 1/Re_L; mu_R = 1/Re_R
@@ -810,12 +816,12 @@ contains
                                  qL_rs_vf(j,k+1,l,E_idx) + FL(j, k+1, l) ) + &
                                  0.5_wp * (rho_R * (qR_rs_vf(j,k,l,momxb+1)**2.0) + &
                                  qR_rs_vf(j,k,l,E_idx) + FR(j, k, l) ) + &
-                                 0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j, k+1, l, momxb+1)*rho_L)
+                                 0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1) - qL_rs_vf(j, k+1, l, momxb+1))
 
                             flux_vf(momxb)%sf(j, k, l) = &
                                 0.5_wp * rho_L * (qL_rs_vf(j,k+1,l,momxb)*qL_rs_vf(j,k+1,l,momxb+1)) + &
                                 0.5_wp * rho_R * (qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1)) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j, k+1, l, momxb)*rho_L)
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb) - qL_rs_vf(j, k+1, l, momxb))
 
                             flux_vf(E_idx)%sf(j, k, l) = &
                                 0.5_wp * ( qL_rs_vf(j,k+1,l,momxb+1) * (qL_rs_vf(j,k+1,l,E_idx)*gamma_L + pi_inf_L + &
@@ -824,7 +830,7 @@ contains
                                 0.5_wp * ( qR_rs_vf(j,k,l,momxb+1) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
                                 0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
                                 qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp) - qL_rs_vf(j, k+1, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j, k+1, l,momxb)**2._wp + qL_rs_vf(j, k+1, l,momxb+1)**2._wp))
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx) - qL_rs_vf(j, k+1, l, E_idx))
 
                             if(viscous) then
                                 mu_L = 1/Re_L; mu_R = 1/Re_R
@@ -893,19 +899,19 @@ contains
                             flux_vf(momxb)%sf(j, k, l) = &
                                 0.5_wp * rho_L * (qL_rs_vf(j,k+1,l,momxb)*qL_rs_vf(j,k+1,l,momxb+1)) + &
                                 0.5_wp * rho_R * (qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1)) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j, k+1, l, momxb)*rho_L)
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb) - qL_rs_vf(j, k+1, l, momxb))
 
                             flux_vf(momxb+1)%sf(j, k, l) = &
                                 0.5_wp* (rho_L * (qL_rs_vf(j,k+1,l,momxb+1)**2.0) + &
                                 qL_rs_vf(j,k+1,l,E_idx) + FL(j, k+1, l) ) + &
                                 0.5_wp* (rho_R * (qR_rs_vf(j,k,l,momxb+1)**2.0) + &
                                 qR_rs_vf(j,k,l,E_idx) + FR(j, k, l) ) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j, k+1, l, momxb+1)*rho_L)
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1) - qL_rs_vf(j, k+1, l, momxb+1))
 
                             flux_vf(momxe)%sf(j, k, l) = &
                                 0.5_wp* rho_L * (qL_rs_vf(j,k+1,l,momxb+1)*qL_rs_vf(j,k+1,l,momxe)) + &
                                 0.5_wp* rho_R * (qR_rs_vf(j,k,l,momxb+1)*qR_rs_vf(j,k,l,momxe)) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxe)*rho_R - qL_rs_vf(j, k+1, l, momxe)*rho_L)
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxe) - qL_rs_vf(j, k+1, l, momxe))
 
                             flux_vf(E_idx)%sf(j, k, l) = &
                                 0.5_wp * ( qL_rs_vf(j,k+1,l,momxb+1) * (qL_rs_vf(j,k+1,l,E_idx)*gamma_L + pi_inf_L + &
@@ -914,7 +920,7 @@ contains
                                 0.5_wp * ( qR_rs_vf(j,k,l,momxb+1) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
                                 0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp + qR_rs_vf(j,k,l,momxe)**2._wp ) + &
                                 qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp + qR_rs_vf(j, k, l,momxe)**2._wp) - qL_rs_vf(j, k+1, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j, k+1, l,momxb)**2._wp + qL_rs_vf(j, k+1, l,momxb+1)**2._wp + qL_rs_vf(j, k+1, l,momxe)**2._wp))
+                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx) - qL_rs_vf(j, k+1, l, E_idx))
 
                             if(viscous) then
                                 mu_L = 1/Re_L; mu_R = 1/Re_R
@@ -990,19 +996,19 @@ contains
                         flux_vf(momxb)%sf(j, k, l) = &
                             0.5_wp * rho_L * (qL_rs_vf(j,k,l+1,momxb)*qL_rs_vf(j,k,l+1,momxe)) + &
                             0.5_wp * rho_R * (qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxe)) + &
-                            0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j, k, l+1, momxb)*rho_L)
+                            0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb) - qL_rs_vf(j, k, l+1, momxb))
 
                         flux_vf(momxb+1)%sf(j, k, l) = &
                             0.5_wp * rho_L * (qL_rs_vf(j,k,l+1,momxb+1)*qL_rs_vf(j,k,l+1,momxe)) + &
                             0.5_wp * rho_R * (qR_rs_vf(j,k,l,momxb+1)*qR_rs_vf(j,k,l,momxe)) + &
-                            0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j, k, l+1, momxb+1)*rho_L)
+                            0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb+1) - qL_rs_vf(j, k, l+1, momxb+1))
 
                         flux_vf(momxe)%sf(j, k, l) = &
                              0.5_wp* (rho_L * (qL_rs_vf(j,k,l+1,momxe)**2.0) + &
                              qL_rs_vf(j,k,l+1,E_idx) + FL(j, k, l+1) ) + &
                              0.5_wp* (rho_R * (qR_rs_vf(j,k,l,momxe)**2.0) + &
                              qR_rs_vf(j,k,l,E_idx) + FR(j, k, l) ) + &
-                             0.5_wp * cfl * (qR_rs_vf(j, k, l, momxe)*rho_R - qL_rs_vf(j, k, l+1, momxe)*rho_L)
+                             0.5_wp * cfl * (qR_rs_vf(j, k, l, momxe) - qL_rs_vf(j, k, l+1, momxe))
 
                          flux_vf(E_idx)%sf(j, k, l) = &
                             0.5_wp * (qL_rs_vf(j,k,l+1,momxe) * (qL_rs_vf(j,k,l+1,E_idx)*gamma_L + pi_inf_L + &
@@ -1011,7 +1017,7 @@ contains
                             0.5_wp * ( qR_rs_vf(j,k,l,momxe) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
                             0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp + qR_rs_vf(j,k,l,momxe)**2._wp ) + &
                             qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
-                            0.5_wp * cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp + qR_rs_vf(j, k, l,momxe)**2._wp) - qL_rs_vf(j, k, l+1, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j, k, l+1,momxb)**2._wp + qL_rs_vf(j, k, l+1,momxb+1)**2._wp + qL_rs_vf(j, k, l+1,momxe)**2._wp))
+                            0.5_wp * cfl * (qR_rs_vf(j, k, l, E_idx) - qL_rs_vf(j, k, l+1, E_idx))
 
                         if(viscous) then
                             mu_L = 1/Re_L; mu_R = 1/Re_R
