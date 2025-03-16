@@ -241,7 +241,11 @@ contains
         real(wp) :: resid
         integer :: num_iters, t_step
 
-        num_iters = num_igr_iters
+        if (t_step == 0) then
+            num_iters = 100
+        else
+            num_iters = num_igr_iters
+        end if
 
         do q = 1, num_iters
             !$acc parallel loop collapse(3) gang vector default(present) private(rho_lx, rho_rx, rho_ly, rho_ry, rho_lz, rho_rz)
@@ -268,6 +272,11 @@ contains
                     end do
                 end do
             end do
+
+            !$acc kernels
+            resid = maxval(abs(jac - jac_old))
+            print*, resid
+            !$acc end kernels
 
             if(bcxb >= -12) then
                 if(bcxb >= 0) then
@@ -609,36 +618,37 @@ contains
                                     qL_rs_vf(j+1,k,l,momxb)) + &
                                     0.5_wp * (qR_rs_vf(j,k,l,advxb+i-1) * &
                                     qR_rs_vf(j,k,l,momxb)) + &
-                                    0.5_wp*cfl * (qR_rs_vf(j, k, l, advxb+i-1) - qL_rs_vf(j+1, k, l, advxb+i-1))
+                                    0.5_wp * cfl * (qR_rs_vf(j, k, l, advxb+i-1) - qL_rs_vf(j+1, k, l, advxb+i-1))
                                 flux_vf(i)%sf(j,k,l) = &
                                     0.5_wp * (qL_rs_vf(j+1,k,l,i) * &
                                     qL_rs_vf(j+1,k,l, momxb)) + &
                                     0.5_wp * (qR_rs_vf(j,k,l,i) * &
                                     qR_rs_vf(j,k,l, momxb)) + &
-                                    0.5_wp*cfl * (qR_rs_vf(j, k, l, i) - qL_rs_vf(j+1, k, l, i))
+                                    0.5_wp * cfl * (qR_rs_vf(j, k, l, i) - qL_rs_vf(j+1, k, l, i))
                             end do
 
                             ! Momentum -> rho*u^2 + p + [[F_igr]]
                             flux_vf(momxb)%sf(j,k,l) = &
-                                 0.5_wp* (rho_L * (qL_rs_vf(j+1,k,l,momxb)**2.0) + &
-                                 qL_rs_vf(j+1,k,l,E_idx) + FL(j+1, k, l) ) + &
-                                 0.5_wp* (rho_R * (qR_rs_vf(j,k,l,momxb)**2.0) + &
-                                 qR_rs_vf(j,k,l,E_idx) + FR(j, k, l) ) + &
-                                 0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j+1, k, l, momxb)*rho_L)
+                                 0.5_wp * (rho_L * (qL_rs_vf(j+1,k,l,momxb)**2.0) + &
+                                           qL_rs_vf(j+1,k,l,E_idx) + FL(j+1, k, l) ) + &
+                                 0.5_wp * (rho_R * (qR_rs_vf(j,k,l,momxb)**2.0) + &
+                                           qR_rs_vf(j,k,l,E_idx) + FR(j, k, l) ) + &
+                                 0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j+1, k, l, momxb)*rho_L)
 
                             flux_vf(momxb+1)%sf(j, k, l) =  &
                                 0.5_wp * rho_L * qL_rs_vf(j+1,k,l,momxb)*qL_rs_vf(j+1,k,l,momxb+1) + &
                                 0.5_wp * rho_R * qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j+1, k, l, momxb+1)*rho_L)
+                                0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j+1, k, l, momxb+1)*rho_L)
 
                              flux_vf(E_idx)%sf(j, k, l) = &
                                 0.5_wp * (qL_rs_vf(j+1,k,l,momxb) * (qL_rs_vf(j+1,k,l,E_idx)*gamma_L + pi_inf_L + &
-                                0.5_wp * rho_L * (qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp ) + &
-                                qL_rs_vf(j+1,k,l,E_idx) + FL(j+1, k, l)) ) + &
+                                          0.5_wp * rho_L * (qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp ) + &
+                                          qL_rs_vf(j+1,k,l,E_idx) + FL(j+1, k, l)) ) + &
                                 0.5_wp * (qR_rs_vf(j,k,l,momxb) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
-                                0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
-                                qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp) - qL_rs_vf(j+1, k, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp))
+                                          0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
+                                          qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
+                                0.5_wp * cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp) - &
+                                                qL_rs_vf(j+1, k, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp))
 
                             if(viscous) then
                                 mu_L = 1/Re_L; mu_R = 1/Re_R
@@ -796,35 +806,36 @@ contains
                                     qL_rs_vf(j,k+1,l,momxb+1)) + &
                                     0.5_wp * (qR_rs_vf(j,k,l,advxb+i-1) * &
                                     qR_rs_vf(j,k,l,momxb+1)) + &
-                                    0.5_wp*cfl * (qR_rs_vf(j, k, l, advxb+i-1) - qL_rs_vf(j, k+1, l, advxb+i-1))
+                                    0.5_wp * cfl * (qR_rs_vf(j, k, l, advxb+i-1) - qL_rs_vf(j, k+1, l, advxb+i-1))
                                 flux_vf(i)%sf(j,k,l) = &
                                     0.5_wp * (qL_rs_vf(j,k+1,l,i) * &
                                     qL_rs_vf(j,k+1,l, momxb+1)) + &
                                     0.5_wp * (qR_rs_vf(j,k,l,i) * &
                                     qR_rs_vf(j,k,l, momxb+1)) + &
-                                    0.5_wp*cfl * (qR_rs_vf(j, k, l, i) - qL_rs_vf(j, k+1, l, i))
+                                    0.5_wp * cfl * (qR_rs_vf(j, k, l, i) - qL_rs_vf(j, k+1, l, i))
                             end do
 
                             flux_vf(momxb+1)%sf(j, k, l) = &
                                  0.5_wp * (rho_L * (qL_rs_vf(j,k+1,l,momxb+1)**2.0) + &
-                                 qL_rs_vf(j,k+1,l,E_idx) + FL(j, k+1, l) ) + &
+                                           qL_rs_vf(j,k+1,l,E_idx) + FL(j, k+1, l) ) + &
                                  0.5_wp * (rho_R * (qR_rs_vf(j,k,l,momxb+1)**2.0) + &
-                                 qR_rs_vf(j,k,l,E_idx) + FR(j, k, l) ) + &
-                                 0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j, k+1, l, momxb+1)*rho_L)
+                                           qR_rs_vf(j,k,l,E_idx) + FR(j, k, l) ) + &
+                                 0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j, k+1, l, momxb+1)*rho_L)
 
                             flux_vf(momxb)%sf(j, k, l) = &
                                 0.5_wp * rho_L * (qL_rs_vf(j,k+1,l,momxb)*qL_rs_vf(j,k+1,l,momxb+1)) + &
                                 0.5_wp * rho_R * (qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1)) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j, k+1, l, momxb)*rho_L)
+                                0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j, k+1, l, momxb)*rho_L)
 
                             flux_vf(E_idx)%sf(j, k, l) = &
-                                0.5_wp * ( qL_rs_vf(j,k+1,l,momxb+1) * (qL_rs_vf(j,k+1,l,E_idx)*gamma_L + pi_inf_L + &
-                                0.5_wp * rho_L * (qL_rs_vf(j, k+1, l,momxb)**2._wp + qL_rs_vf(j, k+1, l,momxb+1)**2._wp ) + &
-                                qL_rs_vf(j,k+1,l,E_idx) + FL(j, k+1, l)) ) + &
-                                0.5_wp * ( qR_rs_vf(j,k,l,momxb+1) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
-                                0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
-                                qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp) - qL_rs_vf(j, k+1, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j, k+1, l,momxb)**2._wp + qL_rs_vf(j, k+1, l,momxb+1)**2._wp))
+                                0.5_wp * (qL_rs_vf(j,k+1,l,momxb+1) * (qL_rs_vf(j,k+1,l,E_idx)*gamma_L + pi_inf_L + &
+                                          0.5_wp * rho_L * (qL_rs_vf(j, k+1, l,momxb)**2._wp + qL_rs_vf(j, k+1, l,momxb+1)**2._wp ) + &
+                                          qL_rs_vf(j,k+1,l,E_idx) + FL(j, k+1, l)) ) + &
+                                0.5_wp * (qR_rs_vf(j,k,l,momxb+1) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
+                                          0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
+                                          qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
+                                0.5_wp * cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp) - &
+                                                qL_rs_vf(j, k+1, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j, k+1, l,momxb)**2._wp + qL_rs_vf(j, k+1, l,momxb+1)**2._wp))
 
                             if(viscous) then
                                 mu_L = 1/Re_L; mu_R = 1/Re_R
@@ -1111,26 +1122,49 @@ contains
                             end do
 
                             ! Momentum -> rho*u^2 + p + [[F_igr]]
+                            !flux_vf(momxb)%sf(j,k,l) = &
+                                 !0.5_wp* (rho_L * (qL_rs_vf(j+1,k,l,momxb)**2.0) + &
+                                 !qL_rs_vf(j+1,k,l,E_idx) ) + &
+                                 !0.5_wp* (rho_R * (qR_rs_vf(j,k,l,momxb)**2.0) + &
+                                 !qR_rs_vf(j,k,l,E_idx) ) + &
+                                 !0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb) - qL_rs_vf(j+1, k, l, momxb))
+
+                            !flux_vf(momxb+1)%sf(j, k, l) =  &
+                                !0.5_wp * rho_L * qL_rs_vf(j+1,k,l,momxb)*qL_rs_vf(j+1,k,l,momxb+1) + &
+                                !0.5_wp * rho_R * qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1) + &
+                                !0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1) - qL_rs_vf(j+1, k, l, momxb+1))
+
+                             !flux_vf(E_idx)%sf(j, k, l) = &
+                                !0.5_wp * (qL_rs_vf(j+1,k,l,momxb) * (qL_rs_vf(j+1,k,l,E_idx)*gamma_L + pi_inf_L + &
+                                !0.5_wp * rho_L * (qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp ) + &
+                                !qL_rs_vf(j+1,k,l,E_idx) ) ) + &
+                                !0.5_wp * (qR_rs_vf(j,k,l,momxb) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
+                                !0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
+                                !qR_rs_vf(j,k,l,E_idx) ) ) + &
+                                !0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx) - qL_rs_vf(j+1, k, l, E_idx))
+
                             flux_vf(momxb)%sf(j,k,l) = &
-                                 0.5_wp* (rho_L * (qL_rs_vf(j+1,k,l,momxb)**2.0) + &
-                                 qL_rs_vf(j+1,k,l,E_idx) ) + &
-                                 0.5_wp* (rho_R * (qR_rs_vf(j,k,l,momxb)**2.0) + &
-                                 qR_rs_vf(j,k,l,E_idx) ) + &
-                                 0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb) - qL_rs_vf(j+1, k, l, momxb))
+                                 0.5_wp * (rho_L * (qL_rs_vf(j+1,k,l,momxb)**2.0) + &
+                                           qL_rs_vf(j+1,k,l,E_idx)) + &
+                                 0.5_wp * (rho_R * (qR_rs_vf(j,k,l,momxb)**2.0) + &
+                                           qR_rs_vf(j,k,l,E_idx)) + &
+                                 0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j+1, k, l, momxb)*rho_L)
 
                             flux_vf(momxb+1)%sf(j, k, l) =  &
                                 0.5_wp * rho_L * qL_rs_vf(j+1,k,l,momxb)*qL_rs_vf(j+1,k,l,momxb+1) + &
                                 0.5_wp * rho_R * qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1) - qL_rs_vf(j+1, k, l, momxb+1))
+                                0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j+1, k, l, momxb+1)*rho_L)
 
                              flux_vf(E_idx)%sf(j, k, l) = &
                                 0.5_wp * (qL_rs_vf(j+1,k,l,momxb) * (qL_rs_vf(j+1,k,l,E_idx)*gamma_L + pi_inf_L + &
-                                0.5_wp * rho_L * (qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp ) + &
-                                qL_rs_vf(j+1,k,l,E_idx) ) ) + &
+                                          0.5_wp * rho_L * (qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp ) + &
+                                          qL_rs_vf(j+1,k,l,E_idx) + FL(j+1, k, l)) ) + &
                                 0.5_wp * (qR_rs_vf(j,k,l,momxb) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
-                                0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
-                                qR_rs_vf(j,k,l,E_idx) ) ) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx) - qL_rs_vf(j+1, k, l, E_idx))
+                                          0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
+                                          qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
+                                0.5_wp * cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp) - &
+                                                qL_rs_vf(j+1, k, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp))
+
 
                             if(viscous) then
                                 mu_L = 1/Re_L; mu_R = 1/Re_R
@@ -1310,26 +1344,49 @@ contains
                                     0.5_wp*cfl * (qR_rs_vf(j, k, l, i) - qL_rs_vf(j+1, k, l, i))
                             end do
 
-                            flux_vf(momxb+1)%sf(k,j,l) = &
-                                 0.5_wp * (rho_L * (qL_rs_vf(j+1,k,l,momxb+1)**2.0) + &
-                                 qL_rs_vf(j+1,k,l,E_idx)  ) + &
+                            !flux_vf(momxb+1)%sf(k,j,l) = &
+                                 !0.5_wp * (rho_L * (qL_rs_vf(j+1,k,l,momxb+1)**2.0) + &
+                                 !qL_rs_vf(j+1,k,l,E_idx)  ) + &
+                                 !0.5_wp * (rho_R * (qR_rs_vf(j,k,l,momxb+1)**2.0) + &
+                                 !qR_rs_vf(j,k,l,E_idx)  ) + &
+                                 !0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1) - qL_rs_vf(j+1, k, l, momxb+1))
+
+                            !flux_vf(momxb)%sf(k,j,l) = &
+                                !0.5_wp * rho_L * (qL_rs_vf(j+1,k,l,momxb)*qL_rs_vf(j+1,k,l,momxb+1)) + &
+                                !0.5_wp * rho_R * (qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1)) + &
+                                !0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb) - qL_rs_vf(j+1, k, l, momxb))
+
+                            !flux_vf(E_idx)%sf(k,j,l) = &
+                                !0.5_wp * ( qL_rs_vf(j+1,k,l,momxb+1) * (qL_rs_vf(j+1,k,l,E_idx)*gamma_L + pi_inf_L + &
+                                !0.5_wp * rho_L * (qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp ) + &
+                                !qL_rs_vf(j+1,k,l,E_idx) ) ) + &
+                                !0.5_wp * ( qR_rs_vf(j,k,l,momxb+1) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
+                                !0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
+                                !qR_rs_vf(j,k,l,E_idx) ) ) + &
+                                !0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx) - qL_rs_vf(j+1, k, l, E_idx))
+
+                            flux_vf(momxb+1)%sf(j, k, l) = &
+                                 0.5_wp * (rho_L * (qL_rs_vf(j,k+1,l,momxb+1)**2.0) + &
+                                           qL_rs_vf(j,k+1,l,E_idx)) + &
                                  0.5_wp * (rho_R * (qR_rs_vf(j,k,l,momxb+1)**2.0) + &
-                                 qR_rs_vf(j,k,l,E_idx)  ) + &
-                                 0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb+1) - qL_rs_vf(j+1, k, l, momxb+1))
+                                           qR_rs_vf(j,k,l,E_idx)) + &
+                                 0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb+1)*rho_R - qL_rs_vf(j, k+1, l, momxb+1)*rho_L)
 
-                            flux_vf(momxb)%sf(k,j,l) = &
-                                0.5_wp * rho_L * (qL_rs_vf(j+1,k,l,momxb)*qL_rs_vf(j+1,k,l,momxb+1)) + &
+                            flux_vf(momxb)%sf(j, k, l) = &
+                                0.5_wp * rho_L * (qL_rs_vf(j,k+1,l,momxb)*qL_rs_vf(j,k+1,l,momxb+1)) + &
                                 0.5_wp * rho_R * (qR_rs_vf(j,k,l,momxb)*qR_rs_vf(j,k,l,momxb+1)) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, momxb) - qL_rs_vf(j+1, k, l, momxb))
+                                0.5_wp * cfl * (qR_rs_vf(j, k, l, momxb)*rho_R - qL_rs_vf(j, k+1, l, momxb)*rho_L)
 
-                            flux_vf(E_idx)%sf(k,j,l) = &
-                                0.5_wp * ( qL_rs_vf(j+1,k,l,momxb+1) * (qL_rs_vf(j+1,k,l,E_idx)*gamma_L + pi_inf_L + &
-                                0.5_wp * rho_L * (qL_rs_vf(j+1, k, l,momxb)**2._wp + qL_rs_vf(j+1, k, l,momxb+1)**2._wp ) + &
-                                qL_rs_vf(j+1,k,l,E_idx) ) ) + &
-                                0.5_wp * ( qR_rs_vf(j,k,l,momxb+1) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
-                                0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
-                                qR_rs_vf(j,k,l,E_idx) ) ) + &
-                                0.5_wp*cfl * (qR_rs_vf(j, k, l, E_idx) - qL_rs_vf(j+1, k, l, E_idx))
+                            flux_vf(E_idx)%sf(j, k, l) = &
+                                0.5_wp * (qL_rs_vf(j,k+1,l,momxb+1) * (qL_rs_vf(j,k+1,l,E_idx)*gamma_L + pi_inf_L + &
+                                          0.5_wp * rho_L * (qL_rs_vf(j, k+1, l,momxb)**2._wp + qL_rs_vf(j, k+1, l,momxb+1)**2._wp ) + &
+                                          qL_rs_vf(j,k+1,l,E_idx) + FL(j, k+1, l)) ) + &
+                                0.5_wp * (qR_rs_vf(j,k,l,momxb+1) * (qR_rs_vf(j,k,l,E_idx)*gamma_R + pi_inf_R + &
+                                          0.5_wp * rho_R * (qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp ) + &
+                                          qR_rs_vf(j,k,l,E_idx) + FR(j, k, l)) ) + &
+                                0.5_wp * cfl * (qR_rs_vf(j, k, l, E_idx)*gamma_R + pi_inf_R + 0.5_wp*rho_R*(qR_rs_vf(j, k, l,momxb)**2._wp + qR_rs_vf(j, k, l,momxb+1)**2._wp) - &
+                                                qL_rs_vf(j, k+1, l, E_idx)*gamma_L - pi_inf_L - 0.5_wp*rho_L*(qL_rs_vf(j, k+1, l,momxb)**2._wp + qL_rs_vf(j, k+1, l,momxb+1)**2._wp))
+
 
                             if(viscous) then
                                 mu_L = 1/Re_L; mu_R = 1/Re_R
@@ -1574,7 +1631,7 @@ contains
         end if
         !$acc update device(alf_igr)
 
-        omega = 1.0_wp
+        omega = 1.005_wp
         !$acc update device(omega)
 
         !$acc parallel loop collapse(3) gang vector default(present)
