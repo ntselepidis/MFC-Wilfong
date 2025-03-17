@@ -89,7 +89,7 @@ contains
 
         num_iters = num_igr_iters
 
-        num_iters = 50
+        num_iters = 2
 
         if(num_fluids > 1) then 
             !$acc parallel loop collapse(3) gang vector default(present) private(rho_lx, rho_rx, rho_ly, rho_ry, rho_lz, rho_rz)
