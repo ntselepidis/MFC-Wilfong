@@ -653,9 +653,9 @@ contains
 
                                 flux_vf(E_idx)%sf(j, k, l) = flux_vf(E_idx)%sf(j, k, l) - &
                                     0.5_wp*mu_L*qL_rs_vf(j+1, k, l, momxb)*((4._wp/3._wp)*duLx(j+1, k, l) - (2._wp/3._wp)*dvLy(j+1, k, l)) - &
-                                    0.5_wp*mu_L*qL_rs_vf(j+1, k, l, momxb)*(duLy(j+1, k, l) + dvLx(j+1, k, l))   - &
+                                    0.5_wp*mu_L*qL_rs_vf(j+1, k, l, momxb+1)*(duLy(j+1, k, l) + dvLx(j+1, k, l))   - &
                                     0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb)*((4._wp/3._wp)*duRx(j, k, l) - (2._wp/3._wp)*dvRy(j, k, l)) - &
-                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb)*(duRy(j, k, l) + dvRx(j, k, l))
+                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb+1)*(duRy(j, k, l) + dvRx(j, k, l))
                             end if
 
                         end do
@@ -750,11 +750,11 @@ contains
 
                                 flux_vf(E_idx)%sf(j, k, l) = flux_vf(E_idx)%sf(j, k, l) - &
                                     0.5_wp*mu_L*qL_rs_vf(j+1, k, l, momxb)*((4._wp/3._wp)*duLx(j+1, k, l) - (2._wp/3._wp)*dvLy(j+1, k, l) - (2._wp/3._wp)*dwLz(j+1, k, l)) - &
-                                    0.5_wp*mu_L*qL_rs_vf(j+1, k, l, momxb)*(duLy(j+1, k, l) + dvLx(j+1, k, l))   - &
-                                    0.5_wp*mu_L*qL_rs_vf(j+1, k, l, momxb)*(duLz(j+1, k, l) + dwLx(j+1, k, l))   - &
+                                    0.5_wp*mu_L*qL_rs_vf(j+1, k, l, momxb+1)*(duLy(j+1, k, l) + dvLx(j+1, k, l))   - &
+                                    0.5_wp*mu_L*qL_rs_vf(j+1, k, l, momxe)*(duLz(j+1, k, l) + dwLx(j+1, k, l))   - &
                                     0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb)*((4._wp/3._wp)*duRx(j, k, l) - (2._wp/3._wp)*dvRy(j, k, l) - (2._wp/3._wp)*dwRz(j, k, l)) - &
-                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb)*(duRy(j, k, l) + dvRx(j, k, l)) - &
-                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb)*(duRz(j, k, l) + dwRx(j, k, l))
+                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb+1)*(duRy(j, k, l) + dvRx(j, k, l)) - &
+                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxe)*(duRz(j, k, l) + dwRx(j, k, l))
                             end if
                         end do
                     end do
@@ -839,9 +839,9 @@ contains
 
                                 flux_vf(E_idx)%sf(j, k, l) = flux_vf(E_idx)%sf(j, k, l) - &
                                     0.5_wp*mu_L*qL_rs_vf(j, k+1, l, momxb+1)*((4._wp/3._wp)*dvLy(j, k+1, l) - (2._wp/3._wp)*duLx(j,k+1, l)) - &
-                                    0.5_wp*mu_L*qL_rs_vf(j, k+1, l, momxb+1)*(duLy(j, k+1, l) + dvLx(j, k+1, l))   - &
+                                    0.5_wp*mu_L*qL_rs_vf(j, k+1, l, momxb)*(duLy(j, k+1, l) + dvLx(j, k+1, l))   - &
                                     0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb+1)*((4._wp/3._wp)*dvRy(j, k, l) - (2._wp/3._wp)*duRx(j, k, l)) - &
-                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb+1)*(duRy(j, k, l) + dvRx(j, k, l))
+                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb)*(duRy(j, k, l) + dvRx(j, k, l))
                             end if
                         end do
                     end do
@@ -933,11 +933,11 @@ contains
 
                                 flux_vf(E_idx)%sf(j, k, l) = flux_vf(E_idx)%sf(j, k, l) - &
                                     0.5_wp*mu_L*qL_rs_vf(j, k+1, l, momxb+1)*((4._wp/3._wp)*dvLy(j, k+1, l) - (2._wp/3._wp)*duLx(j, k+1, l) - (2._wp/3._wp)*dwLz(j,k+1 ,l)) - &
-                                    0.5_wp*mu_L*qL_rs_vf(j, k+1, l, momxb+1)*(duLy(j, k+1, l) + dvLx(j, k+1, l))   - &
-                                    0.5_wp*mu_L*qL_rs_vf(j, k+1, l, momxb+1)*(dwLy(j, k+1, l) + dvLz(j, k+1, l))   - &
+                                    0.5_wp*mu_L*qL_rs_vf(j, k+1, l, momxb)*(duLy(j, k+1, l) + dvLx(j, k+1, l))   - &
+                                    0.5_wp*mu_L*qL_rs_vf(j, k+1, l, momxe)*(dwLy(j, k+1, l) + dvLz(j, k+1, l))   - &
                                     0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb+1)*((4._wp/3._wp)*dvRy(j, k, l) - (2._wp/3._wp)*duRx(j, k, l) - (2._wp/3._wp)*dwRz(j ,k ,l)) - &
-                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb+1)*(duRy(j, k, l) + dvRx(j, k, l))   - &
-                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb+1)*(dwRy(j, k, l) + dvRz(j, k, l))
+                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb)*(duRy(j, k, l) + dvRx(j, k, l))   - &
+                                    0.5_wp*mu_R*qR_rs_vf(j, k, l, momxe)*(dwRy(j, k, l) + dvRz(j, k, l))
                             end if
                         end do
                     end do
@@ -1030,11 +1030,11 @@ contains
 
                             flux_vf(E_idx)%sf(j, k, l) = flux_vf(E_idx)%sf(j, k, l) - &
                             0.5_wp*mu_L*qL_rs_vf(j, k, l+1, momxe)*((4._wp/3._wp)*dwLz(j, k, l+1) - (2._wp/3._wp)*duLx(j, k, l+1) - (2._wp/3._wp)*dvLy(j ,k ,l+1)) - &
-                            0.5_wp*mu_L*qL_rs_vf(j, k, l+1, momxe)*(duLz(j, k, l+1) + dwLx(j, k, l+1))   - &
-                            0.5_wp*mu_L*qL_rs_vf(j, k, l+1, momxe)*(dvLz(j, k, l+1) + dwLy(j, k, l+1))   - &
+                            0.5_wp*mu_L*qL_rs_vf(j, k, l+1, momxb)*(duLz(j, k, l+1) + dwLx(j, k, l+1))   - &
+                            0.5_wp*mu_L*qL_rs_vf(j, k, l+1, momxb+1)*(dvLz(j, k, l+1) + dwLy(j, k, l+1))   - &
                             0.5_wp*mu_R*qR_rs_vf(j, k, l, momxe)*((4._wp/3._wp)*dwRz(j, k, l) - (2._wp/3._wp)*duRx(j, k, l) - (2._wp/3._wp)*dvRy(j ,k ,l)) - &
-                            0.5_wp*mu_R*qR_rs_vf(j, k, l, momxe)*(duRz(j, k, l) + dwRx(j, k, l))   - &
-                            0.5_wp*mu_R*qR_rs_vf(j, k, l, momxe)*(dvRz(j, k, l) + dwRy(j, k, l))
+                            0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb)*(duRz(j, k, l) + dwRx(j, k, l))   - &
+                            0.5_wp*mu_R*qR_rs_vf(j, k, l, momxb+1)*(dvRz(j, k, l) + dwRy(j, k, l))
                         end if
                     end do
                 end do
