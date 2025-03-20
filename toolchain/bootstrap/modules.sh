@@ -25,6 +25,7 @@ if [ -v $u_c ]; then
     log   "$R""Caltech$W: Richardson (r)"
     log   "$BR""Brown$W: Oscar (o)"
     log   "$B""DoD$W:     Carpenter  (c) | Nautilus (n)"
+    log   "$G""CSCS$W:    Santis     (san)"
     log_n "($G""a$W/$G""f$W/$G""s$W/$G""w$W/$C""b$W/$C""e$CR/$C""d/$C""dai$CR/$Y""p$CR/$R""r$CR/$B""c$CR/$B""n$CR/$BR""o"$CR"): "
     read u_c
     log
@@ -78,6 +79,11 @@ if [ "$u_c" != 'c' ]; then
     fi
 else
     module purge > /dev/null 2>&1
+fi
+
+# FIXME - for Frontier, load Steve's private CCE install
+if [ "$u_c" == 'f' ]; then
+    module use /ccs/home/sabbott/soft/modulefiles/
 fi
 
 ELEMENTS="$(__extract "$u_c-all") $(__extract "$u_c-$cg")"
