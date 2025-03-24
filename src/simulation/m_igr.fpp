@@ -156,7 +156,7 @@ contains
                 end do
             end do
 
-            if(bcxb >= -12) then
+            if(bcxb >= -17) then
                 if(bcxb >= 0) then
                     call s_mpi_sendrecv_F_igr(jac, 1, -1)
                 else if (bcxb == -1) then
@@ -190,7 +190,7 @@ contains
                 end if
             end if
 
-            if(bcxe >= -12) then
+            if(bcxe >= -17) then
                 if(bcxe >= 0) then
                     call s_mpi_sendrecv_F_igr(jac, 1, 1)
                 else if (bcxe == -1) then
@@ -223,7 +223,7 @@ contains
                 end if
             end if
 
-            if(bcyb >= -12) then
+            if(bcyb >= -17) then
                 if(bcyb >= 0) then
                     call s_mpi_sendrecv_F_igr(jac, 2, -1)
                 else if (bcyb == -1) then
@@ -256,7 +256,7 @@ contains
                 end if
             end if
 
-            if(bcye >= -12) then
+            if(bcye >= -17) then
                 if(bcye >= 0) then
                     call s_mpi_sendrecv_F_igr(jac, 2, 1)
                 else if (bcye == -1) then
@@ -291,7 +291,7 @@ contains
             end if
 
             if(p > 0) then
-                if(bczb >= -12) then
+                if(bczb >= -17) then
                     if(bczb >= 0) then
                         call s_mpi_sendrecv_F_igr(jac, 3, -1)
                     else if (bczb == -1) then
@@ -325,7 +325,7 @@ contains
                     end if
                 end if
 
-                if(bcze >= -12) then
+                if(bcze >= -17) then
                     if(bcze >= 0) then
                         call s_mpi_sendrecv_F_igr(jac, 3, 1)
                     else if (bcze == -1) then
