@@ -83,7 +83,7 @@ contains
         real(wp), dimension(num_dims, num_dims) :: Omega
         real(wp) :: w1L, w1R, w2L, w2R, w3L, w3R, w1, w2, w3
         real(wp) :: normWL, normWR, normW
-
+#if 0
         if (id == 1) then
             !$acc parallel loop collapse(3) gang vector default(present) private(Omega, &
             !$acc w1L, w2L, w3L, w1R, w2R, w3R, w1, w2, w3, normWL, normWR, normW)
@@ -222,7 +222,7 @@ contains
             end do
 
         end if
-
+#endif
     end subroutine s_compute_capilary_source_flux
 
     subroutine s_get_capilary(q_prim_vf)
@@ -231,6 +231,7 @@ contains
 
         type(int_bounds_info) :: isx, isy, isz
 
+#if 0
         isx%beg = -1; isy%beg = 0; isz%beg = 0
 
         if (m > 0) isy%beg = -1; if (p > 0) isz%beg = -1
@@ -295,6 +296,7 @@ contains
         do i = 1, num_dims
             call s_reconstruct_cell_boundary_values_capillary(c_divs, gL_x, gL_y, gL_z, gR_x, gR_y, gR_z, i)
         end do
+#endif
 
     end subroutine s_get_capilary
 

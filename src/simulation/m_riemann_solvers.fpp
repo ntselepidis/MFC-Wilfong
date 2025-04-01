@@ -338,6 +338,7 @@ contains
 
         integer :: i, j, k, l, q !< Generic loop iterators
 
+#if 0
         ! Populating the buffers of the left and right Riemann problem
         ! states variables, based on the choice of boundary conditions
         call s_populate_riemann_states_variables_buffers( &
@@ -920,7 +921,7 @@ contains
         call s_finalize_riemann_solver(flux_vf, flux_src_vf, &
                                        flux_gsrc_vf, &
                                        norm_dir, ix, iy, iz)
-
+#endif
     end subroutine s_hll_riemann_solver
 
     !> This procedure is the implementation of the Harten, Lax,
@@ -1045,6 +1046,7 @@ contains
         integer :: i, j, k, l, q !< Generic loop iterators
         integer :: idx1, idxi
 
+#if 0
         ! Populating the buffers of the left and right Riemann problem
         ! states variables, based on the choice of boundary conditions
 
@@ -2749,7 +2751,7 @@ contains
         call s_finalize_riemann_solver(flux_vf, flux_src_vf, &
                                        flux_gsrc_vf, &
                                        norm_dir, ix, iy, iz)
-
+#endif
     end subroutine s_hllc_riemann_solver
 
     !>  The computation of parameters, the allocation of memory,
@@ -3440,7 +3442,7 @@ contains
 
         ! Generic loop iterators
         integer :: i, j, k, l
-
+#if 0
         ! Viscous Stresses in z-direction
         if (norm_dir == 1) then
             if (shear_stress) then ! Shear stresses
@@ -3908,7 +3910,7 @@ contains
 
         end if
         ! END: Viscous Stresses in theta-direction
-
+#endif
     end subroutine s_compute_cylindrical_viscous_source_flux
 
     !>  The goal of this subroutine is to evaluate and account
@@ -3963,7 +3965,7 @@ contains
         real(wp), dimension(num_dims, num_dims) :: tau_Re !< Viscous stress tensor
 
         integer :: i, j, k, l !< Generic loop iterators
-
+#if 0
         ! Viscous Stresses in x-direction
         if (norm_dir == 1) then
 
@@ -4400,7 +4402,7 @@ contains
 
         end if
         ! END: Viscous Stresses in z-direction
-
+#endif
     end subroutine s_compute_cartesian_viscous_source_flux
 
     !>  Deallocation and/or disassociation procedures that are

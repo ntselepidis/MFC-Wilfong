@@ -423,7 +423,7 @@ contains
         integer :: i, j, k, l, q
 
         real(wp) :: nb_q, nb_dot, R, R2, nR, nR2, nR_dot, nR2_dot, var, AX
-
+#if 0
         if (idir == 1) then
 
             !Non-polytropic qbmm needs to account for change in bubble radius due to a change in nb
@@ -674,7 +674,7 @@ contains
             end if
 
         end if
-
+#endif
     end subroutine s_compute_qbmm_rhs
 
 !Coefficient array for non-polytropic model (pb and mv values are accounted in wght_pb and wght_mv)
@@ -834,7 +834,7 @@ contains
         integer :: id1, id2, id3
         integer :: i1, i2
         integer :: j, q, r
-
+#if 0
         is1_qbmm = ix; is2_qbmm = iy; is3_qbmm = iz
 
         !$acc update device(is1_qbmm, is2_qbmm, is3_qbmm)
@@ -1027,7 +1027,7 @@ contains
                 end do
             end do
         end do
-
+#endif
     end subroutine s_mom_inv
 
     subroutine s_chyqmom(momin, wght, abscX, abscY)

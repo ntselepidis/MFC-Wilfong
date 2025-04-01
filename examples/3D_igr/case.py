@@ -22,7 +22,7 @@ Nx = 300
 Ny = Nx
 Nz = Nx
 
-mydt = 5e-4
+mydt = 5e-3
 
 # Configuration case dictionary
 data = {
@@ -71,7 +71,7 @@ data = {
     "elliptic_smoothing_iters": 50,
     # Database Structure Parameters
     "format": 1,
-    "precision": 1,
+    "precision": 2,
     "prim_vars_wrt": "T",
     "parallel_io": "T",
     # Fluid Parameters (Gas)

@@ -109,6 +109,8 @@ module m_rhs
     !! quadrature points. gm_alpha_qp is calculated from individual first-order
     !! spatial derivatives located in dq_prim_ds_qp.
 
+    real(wp), allocatable, dimension(:,:,:,:) :: q_cons_arr, rhs_arr
+
     !$acc declare create(gm_alpha_qp)
 
     !> @name The left and right WENO-reconstructed cell-boundary values of the cell-
@@ -641,6 +643,17 @@ contains
             @:ALLOCATE(nbub(0:m, 0:n, 0:p))
         end if
 
+        if (igr) then
+            @:ALLOCATE(q_cons_arr(idwbuff(1)%beg:idwbuff(2)%end, &
+                                  idwbuff(2)%beg:idwbuff(2)%end, &
+                                  idwbuff(3)%beg:idwbuff(3)%end, &
+                                  1:vec_size))
+            @:ALLOCATE(rhs_arr(idwbuff(1)%beg:idwbuff(2)%end, &
+                                  idwbuff(2)%beg:idwbuff(2)%end, &
+                                  idwbuff(3)%beg:idwbuff(3)%end, &
+                                  1:vec_size))
+        end if
+
     end subroutine s_initialize_rhs_module
 
     subroutine s_compute_rhs(q_cons_vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb, rhs_pb, mv, rhs_mv, t_step, time_avg)
@@ -663,64 +676,64 @@ contains
 
         call cpu_time(t_start)
 
-        if(.not. igr) then 
-            ! Association/Population of Working Variables
-            !$acc parallel loop collapse(4) gang vector default(present)
-            do i = 1, sys_size
-                do l = idwbuff(3)%beg, idwbuff(3)%end
-                    do k = idwbuff(2)%beg, idwbuff(2)%end
-                        do j = idwbuff(1)%beg, idwbuff(1)%end
-                            q_cons_qp%vf(i)%sf(j, k, l) = q_cons_vf(i)%sf(j, k, l)
-                        end do
-                    end do
-                end do
-            end do
+        !if(.not. igr) then 
+            !! Association/Population of Working Variables
+            !!$acc parallel loop collapse(4) gang vector default(present)
+            !do i = 1, sys_size
+                !do l = idwbuff(3)%beg, idwbuff(3)%end
+                    !do k = idwbuff(2)%beg, idwbuff(2)%end
+                        !do j = idwbuff(1)%beg, idwbuff(1)%end
+                            !q_cons_qp%vf(i)%sf(j, k, l) = q_cons_vf(i)%sf(j, k, l)
+                        !end do
+                    !end do
+                !end do
+            !end do
 
-            ! Converting Conservative to Primitive Variables
+            !! Converting Conservative to Primitive Variables
 
-            if (mpp_lim .and. bubbles_euler) then
-                !$acc parallel loop collapse(3) gang vector default(present)
-                do l = idwbuff(3)%beg, idwbuff(3)%end
-                    do k = idwbuff(2)%beg, idwbuff(2)%end
-                        do j = idwbuff(1)%beg, idwbuff(1)%end
-                            alf_sum%sf(j, k, l) = 0._wp
-                            !$acc loop seq
-                            do i = advxb, advxe - 1
-                                alf_sum%sf(j, k, l) = alf_sum%sf(j, k, l) + q_cons_qp%vf(i)%sf(j, k, l)
-                            end do
-                            !$acc loop seq
-                            do i = advxb, advxe - 1
-                                q_cons_qp%vf(i)%sf(j, k, l) = q_cons_qp%vf(i)%sf(j, k, l)*(1._wp - q_cons_qp%vf(alf_idx)%sf(j, k, l)) &
-                                                              /alf_sum%sf(j, k, l)
-                            end do
-                        end do
-                    end do
-                end do
-            end if
-        endif
+            !if (mpp_lim .and. bubbles_euler) then
+                !!$acc parallel loop collapse(3) gang vector default(present)
+                !do l = idwbuff(3)%beg, idwbuff(3)%end
+                    !do k = idwbuff(2)%beg, idwbuff(2)%end
+                        !do j = idwbuff(1)%beg, idwbuff(1)%end
+                            !alf_sum%sf(j, k, l) = 0._wp
+                            !!$acc loop seq
+                            !do i = advxb, advxe - 1
+                                !alf_sum%sf(j, k, l) = alf_sum%sf(j, k, l) + q_cons_qp%vf(i)%sf(j, k, l)
+                            !end do
+                            !!$acc loop seq
+                            !do i = advxb, advxe - 1
+                                !q_cons_qp%vf(i)%sf(j, k, l) = q_cons_qp%vf(i)%sf(j, k, l)*(1._wp - q_cons_qp%vf(alf_idx)%sf(j, k, l)) &
+                                                              !/alf_sum%sf(j, k, l)
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end if
+        !endif
 
-        if(igr) then 
+        !if(igr) then 
             call nvtxStartRange("RHS-COMMUNICATION")
             call s_populate_variables_buffers(q_cons_vf, pb, mv, bc_type)
             call nvtxEndRange
-        else
-            call nvtxStartRange("RHS-CONVERT")
-            call s_convert_conservative_to_primitive_variables( &
-                q_cons_qp%vf, &
-                q_T_sf, &
-                q_prim_qp%vf, &
-                idwint, &
-                gm_alpha_qp%vf)
-            call nvtxEndRange
+        !else
+            !call nvtxStartRange("RHS-CONVERT")
+            !call s_convert_conservative_to_primitive_variables( &
+                !q_cons_qp%vf, &
+                !q_T_sf, &
+                !q_prim_qp%vf, &
+                !idwint, &
+                !gm_alpha_qp%vf)
+            !call nvtxEndRange
 
-            call nvtxStartRange("RHS-COMMUNICATION")
-            call s_populate_variables_buffers(q_prim_qp%vf, pb, mv, bc_type)
-            call nvtxEndRange
-        end if            
+            !call nvtxStartRange("RHS-COMMUNICATION")
+            !call s_populate_variables_buffers(q_prim_qp%vf, pb, mv, bc_type)
+            !call nvtxEndRange
+        !end if            
 
-        call nvtxStartRange("RHS-ELASTIC")
-        if (hyperelasticity) call s_hyperelastic_rmt_stress_update(q_cons_qp%vf, q_prim_qp%vf)
-        call nvtxEndRange
+        !call nvtxStartRange("RHS-ELASTIC")
+        !if (hyperelasticity) call s_hyperelastic_rmt_stress_update(q_cons_qp%vf, q_prim_qp%vf)
+        !call nvtxEndRange
 
         if (cfl_dt) then
             if (mytime >= t_stop) return
@@ -728,266 +741,268 @@ contains
             if (t_step == t_step_stop) return
         end if
 
-        if (qbmm) call s_mom_inv(q_cons_qp%vf, q_prim_qp%vf, mom_sp, mom_3d, pb, rhs_pb, mv, rhs_mv, idwbuff(1), idwbuff(2), idwbuff(3), nbub)
+        !if (qbmm) call s_mom_inv(q_cons_qp%vf, q_prim_qp%vf, mom_sp, mom_3d, pb, rhs_pb, mv, rhs_mv, idwbuff(1), idwbuff(2), idwbuff(3), nbub)
 
-        if (viscous .and. .not. igr) then
-            call nvtxStartRange("RHS-VISCOUS")
-            call s_get_viscous(qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
-                               dqL_prim_dx_n, dqL_prim_dy_n, dqL_prim_dz_n, &
-                               qL_prim, &
-                               qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
-                               dqR_prim_dx_n, dqR_prim_dy_n, dqR_prim_dz_n, &
-                               qR_prim, &
-                               q_prim_qp, &
-                               dq_prim_dx_qp, dq_prim_dy_qp, dq_prim_dz_qp, &
-                               idwbuff(1), idwbuff(2), idwbuff(3))
-            call nvtxEndRange
-        end if
+        !if (viscous .and. .not. igr) then
+            !call nvtxStartRange("RHS-VISCOUS")
+            !call s_get_viscous(qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
+                               !dqL_prim_dx_n, dqL_prim_dy_n, dqL_prim_dz_n, &
+                               !qL_prim, &
+                               !qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
+                               !dqR_prim_dx_n, dqR_prim_dy_n, dqR_prim_dz_n, &
+                               !qR_prim, &
+                               !q_prim_qp, &
+                               !dq_prim_dx_qp, dq_prim_dy_qp, dq_prim_dz_qp, &
+                               !idwbuff(1), idwbuff(2), idwbuff(3))
+            !call nvtxEndRange
+        !end if
 
-        if (surface_tension) then
-            call nvtxStartRange("RHS-SURFACE-TENSION")
-            call s_get_capilary(q_prim_qp%vf)
-            call nvtxEndRange
-        end if
+        !if (surface_tension) then
+            !call nvtxStartRange("RHS-SURFACE-TENSION")
+            !call s_get_capilary(q_prim_qp%vf)
+            !call nvtxEndRange
+        !end if
 
         ! Dimensional Splitting Loop
         do id = 1, num_dims
 
-            if (igr) then
+            !if (igr) then
 
                 if (id == 1) then
                     call nvtxStartRange("IGR_SETUP")
-                    call s_initialize_igr(q_cons_vf, rhs_vf)
+                    call s_initialize_igr(q_cons_vf, q_cons_arr, rhs_arr)
                     call nvtxEndRange
                 end if
 
                 call nvtxStartRange("IGR_RIEMANN")
-                call s_igr_riemann_solver(q_cons_vf,rhs_vf,id)
+                call s_igr_riemann_solver(q_cons_arr,rhs_arr,id)
                 call nvtxEndRange
 
                 if(id == 1) then 
                     call nvtxStartRange("IGR_Jacobi")
-                    call s_igr_jacobi_iteration(q_cons_vf,t_step)
+                    call s_igr_jacobi_iteration(q_cons_arr,t_step)
                     call nvtxEndRange
 
                     call nvtxStartRange("IGR_SIGMA")
-                    call s_igr_sigma(q_cons_vf, rhs_vf,id)
+                    call s_igr_sigma(q_cons_arr, rhs_arr,id)
                     call nvtxEndRange
                 end if
-
-            else ! Finite volume solve
-
-                ! Reconstructing Primitive/Conservative Variables
-                call nvtxStartRange("RHS-WENO")
-
-                if (.not. surface_tension) then
-                    ! Reconstruct densitiess
-                    iv%beg = 1; iv%end = sys_size
-                    call s_reconstruct_cell_boundary_values( &
-                        q_prim_qp%vf(1:sys_size), &
-                        qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
-                        qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
-                        id)
-                else
-                    iv%beg = 1; iv%end = E_idx - 1
-                    call s_reconstruct_cell_boundary_values( &
-                        q_prim_qp%vf(iv%beg:iv%end), &
-                        qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
-                        qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
-                        id)
-
-                    iv%beg = E_idx; iv%end = E_idx
-                    call s_reconstruct_cell_boundary_values_first_order( &
-                        q_prim_qp%vf(E_idx), &
-                        qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
-                        qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
-                        id)
-
-                    iv%beg = E_idx + 1; iv%end = sys_size
-                    call s_reconstruct_cell_boundary_values( &
-                        q_prim_qp%vf(iv%beg:iv%end), &
-                        qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
-                        qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
-                        id)
-                end if
-
-                ! Reconstruct viscous derivatives for viscosity
-                if (weno_Re_flux) then
-                    iv%beg = momxb; iv%end = momxe
-                    call s_reconstruct_cell_boundary_values_visc_deriv( &
-                        dq_prim_dx_qp(1)%vf(iv%beg:iv%end), &
-                        dqL_rsx_vf, dqL_rsy_vf, dqL_rsz_vf, &
-                        dqR_rsx_vf, dqR_rsy_vf, dqR_rsz_vf, &
-                        id, dqL_prim_dx_n(id)%vf(iv%beg:iv%end), dqR_prim_dx_n(id)%vf(iv%beg:iv%end), &
-                        idwbuff(1), idwbuff(2), idwbuff(3))
-                    if (n > 0) then
-                        call s_reconstruct_cell_boundary_values_visc_deriv( &
-                            dq_prim_dy_qp(1)%vf(iv%beg:iv%end), &
-                            dqL_rsx_vf, dqL_rsy_vf, dqL_rsz_vf, &
-                            dqR_rsx_vf, dqR_rsy_vf, dqR_rsz_vf, &
-                            id, dqL_prim_dy_n(id)%vf(iv%beg:iv%end), dqR_prim_dy_n(id)%vf(iv%beg:iv%end), &
-                            idwbuff(1), idwbuff(2), idwbuff(3))
-                        if (p > 0) then
-                            call s_reconstruct_cell_boundary_values_visc_deriv( &
-                                dq_prim_dz_qp(1)%vf(iv%beg:iv%end), &
-                                dqL_rsx_vf, dqL_rsy_vf, dqL_rsz_vf, &
-                                dqR_rsx_vf, dqR_rsy_vf, dqR_rsz_vf, &
-                                id, dqL_prim_dz_n(id)%vf(iv%beg:iv%end), dqR_prim_dz_n(id)%vf(iv%beg:iv%end), &
-                                idwbuff(1), idwbuff(2), idwbuff(3))
-                        end if
-                    end if
-                end if
-
-                call nvtxEndRange ! WENO
-
-                ! Configuring Coordinate Direction Indexes
-                if (id == 1) then
-                    irx%beg = -1; iry%beg = 0; irz%beg = 0
-                elseif (id == 2) then
-                    irx%beg = 0; iry%beg = -1; irz%beg = 0
-                else
-                    irx%beg = 0; iry%beg = 0; irz%beg = -1
-                end if
-                irx%end = m; iry%end = n; irz%end = p
-
-                !Computing Riemann Solver Flux and Source Flux
-                call nvtxStartRange("RHS-RIEMANN-SOLVER")
-                call s_riemann_solver(qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
-                                      dqR_prim_dx_n(id)%vf, &
-                                      dqR_prim_dy_n(id)%vf, &
-                                      dqR_prim_dz_n(id)%vf, &
-                                      qR_prim(id)%vf, &
-                                      qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
-                                      dqL_prim_dx_n(id)%vf, &
-                                      dqL_prim_dy_n(id)%vf, &
-                                      dqL_prim_dz_n(id)%vf, &
-                                      qL_prim(id)%vf, &
-                                      q_prim_qp%vf, &
-                                      flux_n(id)%vf, &
-                                      flux_src_n(id)%vf, &
-                                      flux_gsrc_n(id)%vf, &
-                                      id, irx, iry, irz)
-                call nvtxEndRange
-
-
-                ! Additional physics and source terms
-                ! RHS addition for advection source
-                call nvtxStartRange("RHS-ADVECTION-SRC")
-                call s_compute_advection_source_term(id, &
-                                                     rhs_vf, &
-                                                     q_cons_qp, &
-                                                     q_prim_qp, &
-                                                     flux_src_n(id))
-                call nvtxEndRange
-
-                ! RHS additions for hypoelasticity
-                call nvtxStartRange("RHS-HYPOELASTICITY")
-                if (hypoelasticity) call s_compute_hypoelastic_rhs(id, &
-                                                                   q_prim_qp%vf, &
-                                                                   rhs_vf)
-                call nvtxEndRange
-
-                ! RHS additions for viscosity
-                if (viscous .or. surface_tension) then
-                    call nvtxStartRange("RHS-ADD-PHYSICS")
-                    call s_compute_additional_physics_rhs(id, &
-                                                          q_prim_qp%vf, &
-                                                          rhs_vf, &
-                                                          flux_src_n(id)%vf, &
-                                                          dq_prim_dx_qp(1)%vf, &
-                                                          dq_prim_dy_qp(1)%vf, &
-                                                          dq_prim_dz_qp(1)%vf)
-                    call nvtxEndRange
-                end if
-
-                ! RHS additions for sub-grid bubbles_euler
-                if (bubbles_euler) then
-                    call nvtxStartRange("RHS-BUBBLES-COMPUTE")
-                    call s_compute_bubbles_EE_rhs(id, q_prim_qp%vf)
-                    call nvtxEndRange
-                end if
-
-                ! RHS additions for qbmm bubbles
-
-                if (qbmm) then
-                    call nvtxStartRange("RHS-QBMM")
-                    call s_compute_qbmm_rhs(id, &
-                                            q_cons_qp%vf, &
-                                            q_prim_qp%vf, &
-                                            rhs_vf, &
-                                            flux_n(id)%vf, &
-                                            pb, &
-                                            rhs_pb, &
-                                            mv, &
-                                            rhs_mv)
-                    call nvtxEndRange
-                end if
-                ! END: Additional physics and source terms
-            end if
         end do
-        ! END: Dimensional Splitting Loop
 
-        if (ib) then
-            !$acc parallel loop collapse(3) gang vector default(present)
-            do l = 0, p
-                do k = 0, n
-                    do j = 0, m
-                        if (ib_markers%sf(j, k, l) /= 0) then
-                            do i = 1, sys_size
-                                rhs_vf(i)%sf(j, k, l) = 0._wp
-                            end do
-                        end if
-                    end do
-                end do
-            end do
-        end if
+        call s_finalize_igr(q_cons_vf, q_cons_arr, rhs_vf, rhs_arr)
+            !else ! Finite volume solve
 
-        ! Additional Physics and Source Temrs
-        ! Additions for acoustic_source
-        if (acoustic_source) then
-            call nvtxStartRange("RHS-ACOUSTIC-SRC")
-            call s_acoustic_src_calculations(q_cons_qp%vf(1:sys_size), &
-                                             q_prim_qp%vf(1:sys_size), &
-                                             t_step, &
-                                             rhs_vf)
-            call nvtxEndRange
-        end if
+                !! Reconstructing Primitive/Conservative Variables
+                !call nvtxStartRange("RHS-WENO")
 
-        ! Add bubles source term
-        if (bubbles_euler .and. (.not. adap_dt) .and. (.not. qbmm)) then
-            call nvtxStartRange("RHS-BUBBLES-SRC")
-            call s_compute_bubble_EE_source( &
-                q_cons_qp%vf(1:sys_size), &
-                q_prim_qp%vf(1:sys_size), &
-                t_step, &
-                rhs_vf)
-            call nvtxEndRange
-        end if
+                !if (.not. surface_tension) then
+                    !! Reconstruct densitiess
+                    !iv%beg = 1; iv%end = sys_size
+                    !call s_reconstruct_cell_boundary_values( &
+                        !q_prim_qp%vf(1:sys_size), &
+                        !qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
+                        !qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
+                        !id)
+                !else
+                    !iv%beg = 1; iv%end = E_idx - 1
+                    !call s_reconstruct_cell_boundary_values( &
+                        !q_prim_qp%vf(iv%beg:iv%end), &
+                        !qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
+                        !qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
+                        !id)
 
-        if (chemistry .and. chem_params%reactions) then
-            call nvtxStartRange("RHS-CHEM-REACTIONS")
-            call s_compute_chemistry_reaction_flux(rhs_vf, q_cons_qp%vf, q_T_sf, q_prim_qp%vf, idwint)
-            call nvtxEndRange
-        end if
+                    !iv%beg = E_idx; iv%end = E_idx
+                    !call s_reconstruct_cell_boundary_values_first_order( &
+                        !q_prim_qp%vf(E_idx), &
+                        !qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
+                        !qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
+                        !id)
 
-        ! END: Additional pphysics and source terms
+                    !iv%beg = E_idx + 1; iv%end = sys_size
+                    !call s_reconstruct_cell_boundary_values( &
+                        !q_prim_qp%vf(iv%beg:iv%end), &
+                        !qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
+                        !qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
+                        !id)
+                !end if
 
-        if (run_time_info .or. probe_wrt .or. ib .or. bubbles_lagrange) then
-            if(.not. igr) then 
-                !$acc parallel loop collapse(4) gang vector default(present)
-                do i = 1, sys_size
-                    do l = idwbuff(3)%beg, idwbuff(3)%end
-                        do k = idwbuff(2)%beg, idwbuff(2)%end
-                            do j = idwbuff(1)%beg, idwbuff(1)%end
-                                q_prim_vf(i)%sf(j, k, l) = q_prim_qp%vf(i)%sf(j, k, l)
-                            end do
-                        end do
-                    end do
-                end do
-            end if
-        end if
+                !! Reconstruct viscous derivatives for viscosity
+                !if (weno_Re_flux) then
+                    !iv%beg = momxb; iv%end = momxe
+                    !call s_reconstruct_cell_boundary_values_visc_deriv( &
+                        !dq_prim_dx_qp(1)%vf(iv%beg:iv%end), &
+                        !dqL_rsx_vf, dqL_rsy_vf, dqL_rsz_vf, &
+                        !dqR_rsx_vf, dqR_rsy_vf, dqR_rsz_vf, &
+                        !id, dqL_prim_dx_n(id)%vf(iv%beg:iv%end), dqR_prim_dx_n(id)%vf(iv%beg:iv%end), &
+                        !idwbuff(1), idwbuff(2), idwbuff(3))
+                    !if (n > 0) then
+                        !call s_reconstruct_cell_boundary_values_visc_deriv( &
+                            !dq_prim_dy_qp(1)%vf(iv%beg:iv%end), &
+                            !dqL_rsx_vf, dqL_rsy_vf, dqL_rsz_vf, &
+                            !dqR_rsx_vf, dqR_rsy_vf, dqR_rsz_vf, &
+                            !id, dqL_prim_dy_n(id)%vf(iv%beg:iv%end), dqR_prim_dy_n(id)%vf(iv%beg:iv%end), &
+                            !idwbuff(1), idwbuff(2), idwbuff(3))
+                        !if (p > 0) then
+                            !call s_reconstruct_cell_boundary_values_visc_deriv( &
+                                !dq_prim_dz_qp(1)%vf(iv%beg:iv%end), &
+                                !dqL_rsx_vf, dqL_rsy_vf, dqL_rsz_vf, &
+                                !dqR_rsx_vf, dqR_rsy_vf, dqR_rsz_vf, &
+                                !id, dqL_prim_dz_n(id)%vf(iv%beg:iv%end), dqR_prim_dz_n(id)%vf(iv%beg:iv%end), &
+                                !idwbuff(1), idwbuff(2), idwbuff(3))
+                        !end if
+                    !end if
+                !end if
 
-        call cpu_time(t_finish)
+                !call nvtxEndRange ! WENO
+
+                !! Configuring Coordinate Direction Indexes
+                !if (id == 1) then
+                    !irx%beg = -1; iry%beg = 0; irz%beg = 0
+                !elseif (id == 2) then
+                    !irx%beg = 0; iry%beg = -1; irz%beg = 0
+                !else
+                    !irx%beg = 0; iry%beg = 0; irz%beg = -1
+                !end if
+                !irx%end = m; iry%end = n; irz%end = p
+
+                !!Computing Riemann Solver Flux and Source Flux
+                !call nvtxStartRange("RHS-RIEMANN-SOLVER")
+                !call s_riemann_solver(qR_rsx_vf, qR_rsy_vf, qR_rsz_vf, &
+                                      !dqR_prim_dx_n(id)%vf, &
+                                      !dqR_prim_dy_n(id)%vf, &
+                                      !dqR_prim_dz_n(id)%vf, &
+                                      !qR_prim(id)%vf, &
+                                      !qL_rsx_vf, qL_rsy_vf, qL_rsz_vf, &
+                                      !dqL_prim_dx_n(id)%vf, &
+                                      !dqL_prim_dy_n(id)%vf, &
+                                      !dqL_prim_dz_n(id)%vf, &
+                                      !qL_prim(id)%vf, &
+                                      !q_prim_qp%vf, &
+                                      !flux_n(id)%vf, &
+                                      !flux_src_n(id)%vf, &
+                                      !flux_gsrc_n(id)%vf, &
+                                      !id, irx, iry, irz)
+                !call nvtxEndRange
+
+
+                !! Additional physics and source terms
+                !! RHS addition for advection source
+                !call nvtxStartRange("RHS-ADVECTION-SRC")
+                !call s_compute_advection_source_term(id, &
+                                                     !rhs_vf, &
+                                                     !q_cons_qp, &
+                                                     !q_prim_qp, &
+                                                     !flux_src_n(id))
+                !call nvtxEndRange
+
+                !! RHS additions for hypoelasticity
+                !call nvtxStartRange("RHS-HYPOELASTICITY")
+                !if (hypoelasticity) call s_compute_hypoelastic_rhs(id, &
+                                                                   !q_prim_qp%vf, &
+                                                                   !rhs_vf)
+                !call nvtxEndRange
+
+                !! RHS additions for viscosity
+                !if (viscous .or. surface_tension) then
+                    !call nvtxStartRange("RHS-ADD-PHYSICS")
+                    !call s_compute_additional_physics_rhs(id, &
+                                                          !q_prim_qp%vf, &
+                                                          !rhs_vf, &
+                                                          !flux_src_n(id)%vf, &
+                                                          !dq_prim_dx_qp(1)%vf, &
+                                                          !dq_prim_dy_qp(1)%vf, &
+                                                          !dq_prim_dz_qp(1)%vf)
+                    !call nvtxEndRange
+                !end if
+
+                !! RHS additions for sub-grid bubbles_euler
+                !if (bubbles_euler) then
+                    !call nvtxStartRange("RHS-BUBBLES-COMPUTE")
+                    !call s_compute_bubbles_EE_rhs(id, q_prim_qp%vf)
+                    !call nvtxEndRange
+                !end if
+
+                !! RHS additions for qbmm bubbles
+
+                !if (qbmm) then
+                    !call nvtxStartRange("RHS-QBMM")
+                    !call s_compute_qbmm_rhs(id, &
+                                            !q_cons_qp%vf, &
+                                            !q_prim_qp%vf, &
+                                            !rhs_vf, &
+                                            !flux_n(id)%vf, &
+                                            !pb, &
+                                            !rhs_pb, &
+                                            !mv, &
+                                            !rhs_mv)
+                    !call nvtxEndRange
+                !end if
+                !! END: Additional physics and source terms
+            !end if
+        !end do
+        !! END: Dimensional Splitting Loop
+
+        !if (ib) then
+            !!$acc parallel loop collapse(3) gang vector default(present)
+            !do l = 0, p
+                !do k = 0, n
+                    !do j = 0, m
+                        !if (ib_markers%sf(j, k, l) /= 0) then
+                            !do i = 1, sys_size
+                                !rhs_vf(i)%sf(j, k, l) = 0._wp
+                            !end do
+                        !end if
+                    !end do
+                !end do
+            !end do
+        !end if
+
+        !! Additional Physics and Source Temrs
+        !! Additions for acoustic_source
+        !if (acoustic_source) then
+            !call nvtxStartRange("RHS-ACOUSTIC-SRC")
+            !call s_acoustic_src_calculations(q_cons_qp%vf(1:sys_size), &
+                                             !q_prim_qp%vf(1:sys_size), &
+                                             !t_step, &
+                                             !rhs_vf)
+            !call nvtxEndRange
+        !end if
+
+        !! Add bubles source term
+        !if (bubbles_euler .and. (.not. adap_dt) .and. (.not. qbmm)) then
+            !call nvtxStartRange("RHS-BUBBLES-SRC")
+            !call s_compute_bubble_EE_source( &
+                !q_cons_qp%vf(1:sys_size), &
+                !q_prim_qp%vf(1:sys_size), &
+                !t_step, &
+                !rhs_vf)
+            !call nvtxEndRange
+        !end if
+
+        !if (chemistry .and. chem_params%reactions) then
+            !call nvtxStartRange("RHS-CHEM-REACTIONS")
+            !call s_compute_chemistry_reaction_flux(rhs_vf, q_cons_qp%vf, q_T_sf, q_prim_qp%vf, idwint)
+            !call nvtxEndRange
+        !end if
+
+        !! END: Additional pphysics and source terms
+
+        !if (run_time_info .or. probe_wrt .or. ib .or. bubbles_lagrange) then
+            !if(.not. igr) then 
+                !!$acc parallel loop collapse(4) gang vector default(present)
+                !do i = 1, sys_size
+                    !do l = idwbuff(3)%beg, idwbuff(3)%end
+                        !do k = idwbuff(2)%beg, idwbuff(2)%end
+                            !do j = idwbuff(1)%beg, idwbuff(1)%end
+                                !q_prim_vf(i)%sf(j, k, l) = q_prim_qp%vf(i)%sf(j, k, l)
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end if
+        !end if
+
+        !call cpu_time(t_finish)
 
         if (t_step >= 2) then
             time_avg = (abs(t_finish - t_start) + (t_step - 2)*time_avg)/(t_step - 1)
@@ -1008,7 +1023,7 @@ contains
         type(vector_field), intent(inout) :: flux_src_n_vf
 
         integer :: i, j, k, l, q
-
+#if 0
         if (alt_soundspeed) then
             !$acc parallel loop collapse(3) gang vector default(present)
             do l = 0, p
@@ -1551,7 +1566,7 @@ contains
                 end if
             end if
         end if ! id loop
-
+#endif
     end subroutine s_compute_advection_source_term
 
     subroutine s_compute_additional_physics_rhs(idir, q_prim_vf, rhs_vf, flux_src_n, &
@@ -1564,7 +1579,7 @@ contains
         type(scalar_field), dimension(sys_size), intent(in) :: dq_prim_dx_vf, dq_prim_dy_vf, dq_prim_dz_vf
 
         integer :: i, j, k, l
-
+#if 0
         if (idir == 1) then ! x-direction
 
             if (surface_tension) then
@@ -1783,7 +1798,7 @@ contains
                 end do
             end if
         end if
-
+#endif
     end subroutine s_compute_additional_physics_rhs
 
     !>  The purpose of this procedure is to infinitely relax
@@ -1819,7 +1834,7 @@ contains
 
         integer :: i, j, k, l, q, iter !< Generic loop iterators
         integer :: relax !< Relaxation procedure determination variable
-
+#if 0
         !$acc parallel loop collapse(3) gang vector private(pres_K_init, rho_K_s, alpha_rho, alpha, Re, pres_relax)
         do l = 0, p
             do k = 0, n
@@ -2033,6 +2048,7 @@ contains
                 end do
             end do
         end do
+#endif
 
     end subroutine s_pressure_relaxation_procedure
 

@@ -227,6 +227,8 @@ contains
         real(wp) :: w(1:8) ! Intermediate var for ideal weights: s_cb across overall stencil
         real(wp) :: y(1:4) ! Intermediate var for poly & beta: diff(s_cb) across sub-stencil
 
+
+#if 0
         ! Determining the number of cells, the cell-boundary locations and
         ! the boundary conditions in the coordinate direction selected for
         ! the WENO reconstruction
@@ -636,6 +638,7 @@ contains
 
         nullify (s_cb)
 
+#endif
     end subroutine s_compute_weno_coefficients
 
     subroutine s_weno(v_vf, vL_rs_vf_x, vL_rs_vf_y, vL_rs_vf_z, vR_rs_vf_x, vR_rs_vf_y, vR_rs_vf_z, &
@@ -659,7 +662,7 @@ contains
         real(wp) :: tau
 
         integer :: i, j, k, l
-
+#if 0
         is1_weno = is1_weno_d
         is2_weno = is2_weno_d
         is3_weno = is3_weno_d
@@ -1102,7 +1105,7 @@ contains
                 end if
             #:endfor
         end if
-
+#endif
     end subroutine s_weno
 
     !> The computation of parameters, the allocation of memory,
@@ -1267,6 +1270,7 @@ contains
         real(wp), parameter :: alpha_mp = 2._wp
         real(wp), parameter :: beta_mp = 4._wp/3._wp
 
+#if 0
         !$acc parallel loop gang vector collapse (4)  default(present) private(d)
         do l = is3_weno%beg, is3_weno%end
             do k = is2_weno%beg, is2_weno%end
@@ -1393,7 +1397,7 @@ contains
             end do
         end do
         !$acc end parallel loop
-
+#endif
     end subroutine s_preserve_monotonicity
 
     !>  Module deallocation and/or disassociation procedures

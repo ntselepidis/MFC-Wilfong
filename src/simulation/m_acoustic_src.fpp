@@ -156,7 +156,7 @@ contains
         logical :: freq_conv_flag, gauss_conv_flag
 
         integer, parameter :: mass_label = 1, mom_label = 2
-
+#if 0
         sim_time = t_step*dt
         if (time_stepper == 4) sim_time = rkck_time_tmp ! Probably create a time_stepper == 5 for the rkck stepper
 
@@ -329,6 +329,7 @@ contains
                 end do
             end do
         end do
+#endif
     end subroutine s_acoustic_src_calculations
 
     !> This subroutine gives the temporally varying amplitude of the pulse
@@ -351,7 +352,7 @@ contains
         real(wp) :: foc_length_factor ! Scale amplitude with radius for spherical support
         ! i.e. Spherical support -> 1/r scaling; Cylindrical support -> 1/sqrt(r) [empirical correction: ^-0.5 -> ^-0.85]
         integer, parameter :: mass_label = 1
-
+#if 0
         if (n == 0) then
             foc_length_factor = 1._wp
         elseif (p == 0 .and. (.not. cyl_coord)) then ! 2D axisymmetric case is physically 3D
@@ -396,6 +397,7 @@ contains
         elseif (pulse(ai) == 4) then ! Broadband wave
             source = sum_BB
         end if
+#endif
     end subroutine s_source_temporal
 
     !> This subroutine identifies and precalculates the non-zero acoustic spatial sources before time-stepping
@@ -406,6 +408,7 @@ contains
         real(wp) :: source_spatial, angle, xyz_to_r_ratios(3)
         real(wp), parameter :: threshold = 1e-10_wp
 
+#if 0
         if (n == 0) then
             dim = 1
         elseif (p == 0) then
@@ -486,7 +489,7 @@ contains
                 ' grid points with non-zero source term'
         end do
 #endif
-
+#endif
     end subroutine s_precalculate_acoustic_spatial_sources
 
     !> This subroutine gives the spatial support of the acoustic source

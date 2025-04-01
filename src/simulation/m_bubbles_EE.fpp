@@ -73,7 +73,7 @@ contains
         type(scalar_field), dimension(sys_size), intent(inout) :: q_cons_vf
         real(wp) :: nR3bar
         integer(wp) :: i, j, k, l
-
+#if 0
         !$acc parallel loop collapse(3) gang vector default(present)
         do l = 0, p
             do k = 0, n
@@ -87,7 +87,7 @@ contains
                 end do
             end do
         end do
-
+#endif
     end subroutine s_comp_alpha_from_n
 
     subroutine s_compute_bubbles_EE_rhs(idir, q_prim_vf)
@@ -97,6 +97,7 @@ contains
 
         integer :: j, k, l
 
+#if 0
         if (idir == 1) then
 
             if (.not. qbmm) then
@@ -143,7 +144,7 @@ contains
             end do
 
         end if
-
+#endif
     end subroutine s_compute_bubbles_EE_rhs
 
     !>  The purpose of this procedure is to compute the source terms
@@ -170,7 +171,7 @@ contains
         real(wp) :: t_new !< Updated time step size
         real(wp) :: h !< Time step size
         real(wp), dimension(4) :: myR_tmp1, myV_tmp1, myR_tmp2, myV_tmp2 !< Bubble radius, radial velocity, and radial acceleration for the inner loop
-
+#if 0
         !$acc parallel loop collapse(3) gang vector default(present)
         do l = 0, p
             do k = 0, n
@@ -397,6 +398,7 @@ contains
                 end do
             end do
         end if
+#endif
     end subroutine s_compute_bubble_EE_source
 
     !> Choose the initial time step size for the adaptive time stepping routine

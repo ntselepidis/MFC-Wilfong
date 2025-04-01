@@ -72,7 +72,7 @@ contains
         real(wp), dimension(num_dims, num_dims) :: tau_Re
 
         integer :: i, j, k, l, q !< Generic loop iterator
-
+#if 0
         is1_viscous = ix; is2_viscous = iy; is3_viscous = iz
 
         !$acc update device(is1_viscous, is2_viscous, is3_viscous)
@@ -506,6 +506,7 @@ contains
                 end do
             end do
         end if
+#endif
     end subroutine s_compute_viscous_stress_tensor
 
     !>  Computes viscous terms
@@ -540,7 +541,7 @@ contains
         type(int_bounds_info), intent(in) :: ix, iy, iz
 
         integer :: i, j, k, l
-
+#if 0
         do i = 1, num_dims
 
             iv%beg = mom_idx%beg; iv%end = mom_idx%end
@@ -959,7 +960,7 @@ contains
             end if
 
         end if
-
+#endif
     end subroutine s_get_viscous
 
     subroutine s_reconstruct_cell_boundary_values_visc(v_vf, vL_x, vL_y, vL_z, vR_x, vR_y, vR_z, &
@@ -1299,7 +1300,7 @@ contains
         type(int_bounds_info) :: ix, iy, iz
 
         integer :: j, k, l !< Generic loop iterators
-
+#if 0
         ix%beg = 1 - buff_size; ix%end = m + buff_size - 1
         if (n > 0) then
             iy%beg = 1 - buff_size; iy%end = n + buff_size - 1
@@ -1452,7 +1453,7 @@ contains
                 end if
             end if
         end if
-
+#endif
     end subroutine s_compute_fd_gradient
 
     subroutine s_finalize_viscous_module()

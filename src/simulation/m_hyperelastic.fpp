@@ -105,7 +105,7 @@ contains
         real(wp) :: rho, gamma, pi_inf, qv
         real(wp) :: G
         integer :: j, k, l, i, r
-
+#if 0
         !$acc parallel loop collapse(3) gang vector default(present) private(alpha_K, alpha_rho_K, &
         !$acc rho, gamma, pi_inf, qv, G, Re, tensora, tensorb)
         do l = 0, p
@@ -209,6 +209,7 @@ contains
             end do
         end do
         !$acc end parallel loop
+#endif
     end subroutine s_hyperelastic_rmt_stress_update
 
     !>  The following subroutine handles the calculation of the btensor.

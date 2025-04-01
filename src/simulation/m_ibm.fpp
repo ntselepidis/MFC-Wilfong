@@ -150,7 +150,7 @@ contains
         real(wp) :: buf
         type(ghost_point) :: gp
         type(ghost_point) :: innerp
-
+#if 0
         !$acc parallel loop gang vector private(physical_loc, dyn_pres, alpha_rho_IP, alpha_IP, pres_IP, vel_IP, vel_g, vel_norm_IP, r_IP, v_IP, pb_IP, mv_IP, nmom_IP, presb_IP, massv_IP, rho, gamma, pi_inf, Re_K, G_K, Gs, gp, innerp, norm, buf, j, k, l, q, coeff)
         do i = 1, num_gps
 
@@ -321,7 +321,7 @@ contains
                            vel_g(q - momxb + 1)/2._wp
             end do
         end do
-
+#endif
     end subroutine s_ibm_correct_state
 
     !>  Function that computes the image points for each ghost point
@@ -347,7 +347,7 @@ contains
         integer :: patch_id !< IB Patch ID
         integer :: dir
         integer :: index
-
+#if 0
         do q = 1, num_gps
             gp = ghost_points(q)
             i = gp%loc(1)
@@ -407,7 +407,7 @@ contains
                 end if
             end do
         end do
-
+#endif
     end subroutine s_compute_image_points
 
     !> Function that finds the number of ghost points, used for allocating
@@ -418,7 +418,7 @@ contains
         integer, dimension(2*gp_layers + 1, 2*gp_layers + 1, 2*gp_layers + 1) &
             :: subsection_3D
         integer :: i, j, k, l, q !< Iterator variables
-
+#if 0
         num_gps = 0
         num_inner_gps = 0
 
@@ -452,7 +452,7 @@ contains
                 end if
             end do
         end do
-
+#endif
     end subroutine s_find_num_ghost_points
 
     !> Function that finds the ghost points
@@ -467,7 +467,7 @@ contains
         integer :: i, j, k !< Iterator variables
         integer :: count, count_i
         integer :: patch_id
-
+#if 0
         count = 1
         count_i = 1
 
@@ -567,7 +567,7 @@ contains
                 end if
             end do
         end do
-
+#endif
     end subroutine s_find_ghost_points
 
     !>  Function that computes the interpolation coefficients of image points
@@ -584,7 +584,7 @@ contains
         integer :: i, j, k, l, q !< Iterator variables
         integer :: i1, i2, j1, j2, k1, k2 !< Grid indexes
         integer :: patch_id
-
+#if 0
         ! 2D
         if (p <= 0) then
             do i = 1, num_gps
@@ -720,6 +720,7 @@ contains
                 ghost_points(i)%interp_coeffs = interp_coeffs
             end do
         end if
+#endif
 
     end subroutine s_compute_interpolation_coeffs
 
@@ -746,7 +747,7 @@ contains
         integer :: i, j, k, l, q !< Iterator variables
         integer :: i1, i2, j1, j2, k1, k2 !< Iterator variables
         real(wp) :: coeff
-
+#if 0
         i1 = gp%ip_grid(1); i2 = i1 + 1
         j1 = gp%ip_grid(2); j2 = j1 + 1
         k1 = gp%ip_grid(3); k2 = k1 + 1
@@ -837,6 +838,7 @@ contains
                 end do
             end do
         end do
+#endif
 
     end subroutine s_interpolate_image_point
 

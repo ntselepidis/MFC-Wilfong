@@ -96,7 +96,7 @@ contains
 
         integer :: i, k, l, q, r !< Loop variables
         integer :: ndirs  !< Number of coordinate directions
-
+#if 0
         ndirs = 1; if (n > 0) ndirs = 2; if (p > 0) ndirs = 3
 
         if (idir == 1) then
@@ -330,7 +330,7 @@ contains
                 end do
             end do
         end if
-
+#endif
     end subroutine s_compute_hypoelastic_rhs
 
     subroutine s_finalize_hypoelastic_module()

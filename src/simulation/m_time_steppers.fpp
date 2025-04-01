@@ -358,107 +358,107 @@ contains
 
         integer :: i, j, k, l, q !< Generic loop iterator
 
-        ! Stage 1 of 1
-        call nvtxStartRange("TIMESTEP")
+        !! Stage 1 of 1
+        !call nvtxStartRange("TIMESTEP")
 
-        call s_compute_rhs(q_cons_ts(1)%vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb_ts(1)%sf, rhs_pb, mv_ts(1)%sf, rhs_mv, t_step, time_avg)
+        !call s_compute_rhs(q_cons_ts(1)%vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb_ts(1)%sf, rhs_pb, mv_ts(1)%sf, rhs_mv, t_step, time_avg)
 
-#ifdef DEBUG
-        print *, 'got rhs'
-#endif
+!#ifdef DEBUG
+        !print *, 'got rhs'
+!#endif
 
-        if (run_time_info) then
-            if(igr) then
-                call s_write_run_time_information(q_cons_ts(1)%vf, t_step)
-            else
-                call s_write_run_time_information(q_prim_vf, t_step)
-            end if
-        end if
+        !if (run_time_info) then
+            !if(igr) then
+                !call s_write_run_time_information(q_cons_ts(1)%vf, t_step)
+            !else
+                !call s_write_run_time_information(q_prim_vf, t_step)
+            !end if
+        !end if
 
-#ifdef DEBUG
-        print *, 'wrote runtime info'
-#endif
+!#ifdef DEBUG
+        !print *, 'wrote runtime info'
+!#endif
 
-        if (probe_wrt) then
-            call s_time_step_cycling(t_step)
-        end if
+        !if (probe_wrt) then
+            !call s_time_step_cycling(t_step)
+        !end if
 
-        if (cfl_dt) then
-            if (mytime >= t_stop) return
-        else
-            if (t_step == t_step_stop) return
-        end if
+        !if (cfl_dt) then
+            !if (mytime >= t_stop) return
+        !else
+            !if (t_step == t_step_stop) return
+        !end if
 
-        if (bubbles_lagrange) then
-            call s_compute_EL_coupled_solver(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, stage=1)
-            call s_update_lagrange_tdv_rk(stage=1)
-        end if
+        !if (bubbles_lagrange) then
+            !call s_compute_EL_coupled_solver(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, stage=1)
+            !call s_update_lagrange_tdv_rk(stage=1)
+        !end if
 
-        !$acc parallel loop collapse(4) gang vector default(present)
-        do i = 1, vec_size
-            do l = 0, p
-                do k = 0, n
-                    do j = 0, m
-                        q_cons_ts(1)%vf(i)%sf(j, k, l) = &
-                            q_cons_ts(1)%vf(i)%sf(j, k, l) &
-                            + dt*rhs_vf(i)%sf(j, k, l)
-                    end do
-                end do
-            end do
-        end do
+        !!$acc parallel loop collapse(4) gang vector default(present)
+        !do i = 1, vec_size
+            !do l = 0, p
+                !do k = 0, n
+                    !do j = 0, m
+                        !q_cons_ts(1)%vf(i)%sf(j, k, l) = &
+                            !q_cons_ts(1)%vf(i)%sf(j, k, l) &
+                            !+ dt*rhs_vf(i)%sf(j, k, l)
+                    !end do
+                !end do
+            !end do
+        !end do
 
-        !Evolve pb and mv for non-polytropic qbmm
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                pb_ts(1)%sf(j, k, l, q, i) = &
-                                    pb_ts(1)%sf(j, k, l, q, i) &
-                                    + dt*rhs_pb(j, k, l, q, i)
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !!Evolve pb and mv for non-polytropic qbmm
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !pb_ts(1)%sf(j, k, l, q, i) = &
+                                    !pb_ts(1)%sf(j, k, l, q, i) &
+                                    !+ dt*rhs_pb(j, k, l, q, i)
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                mv_ts(1)%sf(j, k, l, q, i) = &
-                                    mv_ts(1)%sf(j, k, l, q, i) &
-                                    + dt*rhs_mv(j, k, l, q, i)
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !mv_ts(1)%sf(j, k, l, q, i) = &
+                                    !mv_ts(1)%sf(j, k, l, q, i) &
+                                    !+ dt*rhs_mv(j, k, l, q, i)
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, dt)
+        !if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, dt)
 
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(1)%vf)
+        !if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(1)%vf)
 
-        if (model_eqns == 3) call s_pressure_relaxation_procedure(q_cons_ts(1)%vf)
+        !if (model_eqns == 3) call s_pressure_relaxation_procedure(q_cons_ts(1)%vf)
 
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(1)%vf)
+        !if (adv_n) call s_comp_alpha_from_n(q_cons_ts(1)%vf)
 
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf)
-            end if
-        end if
+        !if (ib) then
+            !if (qbmm .and. .not. polytropic) then
+                !call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf)
+            !else
+                !call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf)
+            !end if
+        !end if
 
-        call nvtxEndRange
+        !call nvtxEndRange
 
     end subroutine s_1st_order_tvd_rk
 
@@ -474,181 +474,181 @@ contains
 
         ! Stage 1 of 2
 
-        call cpu_time(start)
+        !call cpu_time(start)
 
-        call nvtxStartRange("TIMESTEP")
+        !call nvtxStartRange("TIMESTEP")
 
-        call s_compute_rhs(q_cons_ts(1)%vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb_ts(1)%sf, rhs_pb, mv_ts(1)%sf, rhs_mv, t_step, time_avg)
+        !call s_compute_rhs(q_cons_ts(1)%vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb_ts(1)%sf, rhs_pb, mv_ts(1)%sf, rhs_mv, t_step, time_avg)
 
-        if (run_time_info) then
-            if(igr) then
-                call s_write_run_time_information(q_cons_ts(1)%vf, t_step)
-            else
-                call s_write_run_time_information(q_prim_vf, t_step)
-            end if
-        end if
+        !if (run_time_info) then
+            !if(igr) then
+                !call s_write_run_time_information(q_cons_ts(1)%vf, t_step)
+            !else
+                !call s_write_run_time_information(q_prim_vf, t_step)
+            !end if
+        !end if
 
-        if (probe_wrt) then
-            call s_time_step_cycling(t_step)
-        end if
+        !if (probe_wrt) then
+            !call s_time_step_cycling(t_step)
+        !end if
 
-        if (cfl_dt) then
-            if (mytime >= t_stop) return
-        else
-            if (t_step == t_step_stop) return
-        end if
+        !if (cfl_dt) then
+            !if (mytime >= t_stop) return
+        !else
+            !if (t_step == t_step_stop) return
+        !end if
 
-        if (bubbles_lagrange) then
-            call s_compute_EL_coupled_solver(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, stage=1)
-            call s_update_lagrange_tdv_rk(stage=1)
-        end if
+        !if (bubbles_lagrange) then
+            !call s_compute_EL_coupled_solver(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, stage=1)
+            !call s_update_lagrange_tdv_rk(stage=1)
+        !end if
 
-        !$acc parallel loop collapse(4) gang vector default(present)
-        do i = 1, vec_size
-            do l = 0, p
-                do k = 0, n
-                    do j = 0, m
-                        q_cons_ts(2)%vf(i)%sf(j, k, l) = &
-                            q_cons_ts(1)%vf(i)%sf(j, k, l) &
-                            + dt*rhs_vf(i)%sf(j, k, l)
-                    end do
-                end do
-            end do
-        end do
+        !!$acc parallel loop collapse(4) gang vector default(present)
+        !do i = 1, vec_size
+            !do l = 0, p
+                !do k = 0, n
+                    !do j = 0, m
+                        !q_cons_ts(2)%vf(i)%sf(j, k, l) = &
+                            !q_cons_ts(1)%vf(i)%sf(j, k, l) &
+                            !+ dt*rhs_vf(i)%sf(j, k, l)
+                    !end do
+                !end do
+            !end do
+        !end do
 
-        !Evolve pb and mv for non-polytropic qbmm
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                pb_ts(2)%sf(j, k, l, q, i) = &
-                                    pb_ts(1)%sf(j, k, l, q, i) &
-                                    + dt*rhs_pb(j, k, l, q, i)
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !!Evolve pb and mv for non-polytropic qbmm
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !pb_ts(2)%sf(j, k, l, q, i) = &
+                                    !pb_ts(1)%sf(j, k, l, q, i) &
+                                    !+ dt*rhs_pb(j, k, l, q, i)
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                mv_ts(2)%sf(j, k, l, q, i) = &
-                                    mv_ts(1)%sf(j, k, l, q, i) &
-                                    + dt*rhs_mv(j, k, l, q, i)
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !mv_ts(2)%sf(j, k, l, q, i) = &
+                                    !mv_ts(1)%sf(j, k, l, q, i) &
+                                    !+ dt*rhs_mv(j, k, l, q, i)
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, dt)
+        !if (bodyForces) call s_apply_bodyforces(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, dt)
 
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(2)%vf)
+        !if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(2)%vf)
 
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(2)%vf)
-        end if
+        !if (model_eqns == 3 .and. (.not. relax)) then
+            !call s_pressure_relaxation_procedure(q_cons_ts(2)%vf)
+        !end if
 
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(2)%vf)
+        !if (adv_n) call s_comp_alpha_from_n(q_cons_ts(2)%vf)
 
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf)
-            end if
-        end if
+        !if (ib) then
+            !if (qbmm .and. .not. polytropic) then
+                !call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf)
+            !else
+                !call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf)
+            !end if
+        !end if
 
-        ! Stage 2 of 2
+        !! Stage 2 of 2
 
-        call s_compute_rhs(q_cons_ts(2)%vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb_ts(2)%sf, rhs_pb, mv_ts(2)%sf, rhs_mv, t_step, time_avg)
+        !call s_compute_rhs(q_cons_ts(2)%vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb_ts(2)%sf, rhs_pb, mv_ts(2)%sf, rhs_mv, t_step, time_avg)
 
-        if (bubbles_lagrange) then
-            call s_compute_EL_coupled_solver(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, stage=2)
-            call s_update_lagrange_tdv_rk(stage=2)
-        end if
+        !if (bubbles_lagrange) then
+            !call s_compute_EL_coupled_solver(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, stage=2)
+            !call s_update_lagrange_tdv_rk(stage=2)
+        !end if
 
-        !$acc parallel loop collapse(4) gang vector default(present)
-        do i = 1, vec_size
-            do l = 0, p
-                do k = 0, n
-                    do j = 0, m
-                        q_cons_ts(1)%vf(i)%sf(j, k, l) = &
-                            (q_cons_ts(1)%vf(i)%sf(j, k, l) &
-                             + q_cons_ts(2)%vf(i)%sf(j, k, l) &
-                             + dt*rhs_vf(i)%sf(j, k, l))/2._wp
-                    end do
-                end do
-            end do
-        end do
+        !!$acc parallel loop collapse(4) gang vector default(present)
+        !do i = 1, vec_size
+            !do l = 0, p
+                !do k = 0, n
+                    !do j = 0, m
+                        !q_cons_ts(1)%vf(i)%sf(j, k, l) = &
+                            !(q_cons_ts(1)%vf(i)%sf(j, k, l) &
+                             !+ q_cons_ts(2)%vf(i)%sf(j, k, l) &
+                             !+ dt*rhs_vf(i)%sf(j, k, l))/2._wp
+                    !end do
+                !end do
+            !end do
+        !end do
 
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                pb_ts(1)%sf(j, k, l, q, i) = &
-                                    (pb_ts(1)%sf(j, k, l, q, i) &
-                                     + pb_ts(2)%sf(j, k, l, q, i) &
-                                     + dt*rhs_pb(j, k, l, q, i))/2._wp
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !pb_ts(1)%sf(j, k, l, q, i) = &
+                                    !(pb_ts(1)%sf(j, k, l, q, i) &
+                                     !+ pb_ts(2)%sf(j, k, l, q, i) &
+                                     !+ dt*rhs_pb(j, k, l, q, i))/2._wp
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                mv_ts(1)%sf(j, k, l, q, i) = &
-                                    (mv_ts(1)%sf(j, k, l, q, i) &
-                                     + mv_ts(2)%sf(j, k, l, q, i) &
-                                     + dt*rhs_mv(j, k, l, q, i))/2._wp
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !mv_ts(1)%sf(j, k, l, q, i) = &
+                                    !(mv_ts(1)%sf(j, k, l, q, i) &
+                                     !+ mv_ts(2)%sf(j, k, l, q, i) &
+                                     !+ dt*rhs_mv(j, k, l, q, i))/2._wp
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, 2._wp*dt/3._wp)
+        !if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, 2._wp*dt/3._wp)
 
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(1)%vf)
+        !if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(1)%vf)
 
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(1)%vf)
-        end if
+        !if (model_eqns == 3 .and. (.not. relax)) then
+            !call s_pressure_relaxation_procedure(q_cons_ts(1)%vf)
+        !end if
 
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(1)%vf)
+        !if (adv_n) call s_comp_alpha_from_n(q_cons_ts(1)%vf)
 
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf)
-            end if
-        end if
+        !if (ib) then
+            !if (qbmm .and. .not. polytropic) then
+                !call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf)
+            !else
+                !call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf)
+            !end if
+        !end if
 
-        call nvtxEndRange
+        !call nvtxEndRange
 
-        call cpu_time(finish)
+        !call cpu_time(finish)
 
     end subroutine s_2nd_order_tvd_rk
 
@@ -671,17 +671,17 @@ contains
 
         call s_compute_rhs(q_cons_ts(1)%vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb_ts(1)%sf, rhs_pb, mv_ts(1)%sf, rhs_mv, t_step, time_avg)
 
-        if (run_time_info) then
-            if(igr) then
-                call s_write_run_time_information(q_cons_ts(1)%vf, t_step)
-            else
-                call s_write_run_time_information(q_prim_vf, t_step)
-            end if
-        end if
+        !if (run_time_info) then
+            !if(igr) then
+                !call s_write_run_time_information(q_cons_ts(1)%vf, t_step)
+            !else
+                !call s_write_run_time_information(q_prim_vf, t_step)
+            !end if
+        !end if
 
-        if (probe_wrt) then
-            call s_time_step_cycling(t_step)
-        end if
+        !if (probe_wrt) then
+            !call s_time_step_cycling(t_step)
+        !end if
 
         if (cfl_dt) then
             if (mytime >= t_stop) return
@@ -689,10 +689,10 @@ contains
             if (t_step == t_step_stop) return
         end if
 
-        if (bubbles_lagrange) then
-            call s_compute_EL_coupled_solver(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, stage=1)
-            call s_update_lagrange_tdv_rk(stage=1)
-        end if
+        !if (bubbles_lagrange) then
+            !call s_compute_EL_coupled_solver(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, stage=1)
+            !call s_update_lagrange_tdv_rk(stage=1)
+        !end if
 
         !$acc parallel loop collapse(3) gang vector default(present)
         do l = 0, p
@@ -708,66 +708,66 @@ contains
         end do
 
         !Evolve pb and mv for non-polytropic qbmm
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                pb_ts(2)%sf(j, k, l, q, i) = &
-                                    pb_ts(1)%sf(j, k, l, q, i) &
-                                    + dt*rhs_pb(j, k, l, q, i)
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !pb_ts(2)%sf(j, k, l, q, i) = &
+                                    !pb_ts(1)%sf(j, k, l, q, i) &
+                                    !+ dt*rhs_pb(j, k, l, q, i)
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                mv_ts(2)%sf(j, k, l, q, i) = &
-                                    mv_ts(1)%sf(j, k, l, q, i) &
-                                    + dt*rhs_mv(j, k, l, q, i)
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !mv_ts(2)%sf(j, k, l, q, i) = &
+                                    !mv_ts(1)%sf(j, k, l, q, i) &
+                                    !+ dt*rhs_mv(j, k, l, q, i)
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, dt)
+        !if (bodyForces) call s_apply_bodyforces(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, dt)
 
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(2)%vf)
+        !if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(2)%vf)
 
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(2)%vf)
-        end if
+        !if (model_eqns == 3 .and. (.not. relax)) then
+            !call s_pressure_relaxation_procedure(q_cons_ts(2)%vf)
+        !end if
 
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(2)%vf)
+        !if (adv_n) call s_comp_alpha_from_n(q_cons_ts(2)%vf)
 
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf)
-            end if
-        end if
+        !if (ib) then
+            !if (qbmm .and. .not. polytropic) then
+                !call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf)
+            !else
+                !call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf)
+            !end if
+        !end if
 
         ! Stage 2 of 3
 
         call s_compute_rhs(q_cons_ts(2)%vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb_ts(2)%sf, rhs_pb, mv_ts(2)%sf, rhs_mv, t_step, time_avg)
 
-        if (bubbles_lagrange) then
-            call s_compute_EL_coupled_solver(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, stage=2)
-            call s_update_lagrange_tdv_rk(stage=2)
-        end if
+        !if (bubbles_lagrange) then
+            !call s_compute_EL_coupled_solver(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, stage=2)
+            !call s_update_lagrange_tdv_rk(stage=2)
+        !end if
 
         !$acc parallel loop collapse(3) gang vector default(present)
         do l = 0, p
@@ -783,67 +783,67 @@ contains
             end do
         end do
 
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                pb_ts(2)%sf(j, k, l, q, i) = &
-                                    (3._wp*pb_ts(1)%sf(j, k, l, q, i) &
-                                     + pb_ts(2)%sf(j, k, l, q, i) &
-                                     + dt*rhs_pb(j, k, l, q, i))/4._wp
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !pb_ts(2)%sf(j, k, l, q, i) = &
+                                    !(3._wp*pb_ts(1)%sf(j, k, l, q, i) &
+                                     !+ pb_ts(2)%sf(j, k, l, q, i) &
+                                     !+ dt*rhs_pb(j, k, l, q, i))/4._wp
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                mv_ts(2)%sf(j, k, l, q, i) = &
-                                    (3._wp*mv_ts(1)%sf(j, k, l, q, i) &
-                                     + mv_ts(2)%sf(j, k, l, q, i) &
-                                     + dt*rhs_mv(j, k, l, q, i))/4._wp
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !mv_ts(2)%sf(j, k, l, q, i) = &
+                                    !(3._wp*mv_ts(1)%sf(j, k, l, q, i) &
+                                     !+ mv_ts(2)%sf(j, k, l, q, i) &
+                                     !+ dt*rhs_mv(j, k, l, q, i))/4._wp
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, dt/4._wp)
+        !if (bodyForces) call s_apply_bodyforces(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, dt/4._wp)
 
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(2)%vf)
+        !if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(2)%vf)
 
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(2)%vf)
-        end if
+        !if (model_eqns == 3 .and. (.not. relax)) then
+            !call s_pressure_relaxation_procedure(q_cons_ts(2)%vf)
+        !end if
 
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(2)%vf)
+        !if (adv_n) call s_comp_alpha_from_n(q_cons_ts(2)%vf)
 
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf)
-            end if
-        end if
+        !if (ib) then
+            !if (qbmm .and. .not. polytropic) then
+                !call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf, pb_ts(2)%sf, mv_ts(2)%sf)
+            !else
+                !call s_ibm_correct_state(q_cons_ts(2)%vf, q_prim_vf)
+            !end if
+        !end if
 
         ! Stage 3 of 3
         call s_compute_rhs(q_cons_ts(2)%vf, q_T_sf, q_prim_vf, bc_type, rhs_vf, pb_ts(2)%sf, rhs_pb, mv_ts(2)%sf, rhs_mv, t_step, time_avg)
 
-        if (bubbles_lagrange) then
-            call s_compute_EL_coupled_solver(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, stage=3)
-            call s_update_lagrange_tdv_rk(stage=3)
-        end if
+        !if (bubbles_lagrange) then
+            !call s_compute_EL_coupled_solver(q_cons_ts(2)%vf, q_prim_vf, rhs_vf, stage=3)
+            !call s_update_lagrange_tdv_rk(stage=3)
+        !end if
         
         !$acc parallel loop collapse(3) gang vector default(present)
         do l = 0, p
@@ -859,63 +859,63 @@ contains
             end do
         end do
 
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                pb_ts(1)%sf(j, k, l, q, i) = &
-                                    (pb_ts(1)%sf(j, k, l, q, i) &
-                                     + 2._wp*pb_ts(2)%sf(j, k, l, q, i) &
-                                     + 2._wp*dt*rhs_pb(j, k, l, q, i))/3._wp
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !pb_ts(1)%sf(j, k, l, q, i) = &
+                                    !(pb_ts(1)%sf(j, k, l, q, i) &
+                                     !+ 2._wp*pb_ts(2)%sf(j, k, l, q, i) &
+                                     !+ 2._wp*dt*rhs_pb(j, k, l, q, i))/3._wp
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (qbmm .and. (.not. polytropic)) then
-            !$acc parallel loop collapse(5) gang vector default(present)
-            do i = 1, nb
-                do l = 0, p
-                    do k = 0, n
-                        do j = 0, m
-                            do q = 1, nnode
-                                mv_ts(1)%sf(j, k, l, q, i) = &
-                                    (mv_ts(1)%sf(j, k, l, q, i) &
-                                     + 2._wp*mv_ts(2)%sf(j, k, l, q, i) &
-                                     + 2._wp*dt*rhs_mv(j, k, l, q, i))/3._wp
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-        end if
+        !if (qbmm .and. (.not. polytropic)) then
+            !!$acc parallel loop collapse(5) gang vector default(present)
+            !do i = 1, nb
+                !do l = 0, p
+                    !do k = 0, n
+                        !do j = 0, m
+                            !do q = 1, nnode
+                                !mv_ts(1)%sf(j, k, l, q, i) = &
+                                    !(mv_ts(1)%sf(j, k, l, q, i) &
+                                     !+ 2._wp*mv_ts(2)%sf(j, k, l, q, i) &
+                                     !+ 2._wp*dt*rhs_mv(j, k, l, q, i))/3._wp
+                            !end do
+                        !end do
+                    !end do
+                !end do
+            !end do
+        !end if
 
-        if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, 2._wp*dt/3._wp)
+        !if (bodyForces) call s_apply_bodyforces(q_cons_ts(1)%vf, q_prim_vf, rhs_vf, 2._wp*dt/3._wp)
 
-        if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(1)%vf)
+        !if (grid_geometry == 3) call s_apply_fourier_filter(q_cons_ts(1)%vf)
 
-        if (model_eqns == 3 .and. (.not. relax)) then
-            call s_pressure_relaxation_procedure(q_cons_ts(1)%vf)
-        end if
+        !if (model_eqns == 3 .and. (.not. relax)) then
+            !call s_pressure_relaxation_procedure(q_cons_ts(1)%vf)
+        !end if
 
-        call nvtxStartRange("RHS-ELASTIC")
-        if (hyperelasticity) call s_hyperelastic_rmt_stress_update(q_cons_ts(1)%vf, q_prim_vf)
-        call nvtxEndRange
+        !call nvtxStartRange("RHS-ELASTIC")
+        !if (hyperelasticity) call s_hyperelastic_rmt_stress_update(q_cons_ts(1)%vf, q_prim_vf)
+        !call nvtxEndRange
 
-        if (adv_n) call s_comp_alpha_from_n(q_cons_ts(1)%vf)
+        !if (adv_n) call s_comp_alpha_from_n(q_cons_ts(1)%vf)
 
-        if (ib) then
-            if (qbmm .and. .not. polytropic) then
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf)
-            else
-                call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf)
-            end if
-        end if
+        !if (ib) then
+            !if (qbmm .and. .not. polytropic) then
+                !call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf, pb_ts(1)%sf, mv_ts(1)%sf)
+            !else
+                !call s_ibm_correct_state(q_cons_ts(1)%vf, q_prim_vf)
+            !end if
+        !end if
 
         if (.not. adap_dt) then
             call nvtxEndRange

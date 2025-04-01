@@ -520,7 +520,7 @@ contains
         integer, dimension(3) :: cell
 
         integer :: i, k, l
-
+#if 0
         call nvtxStartRange("LAGRANGE-BUBBLE-DYNAMICS")
 
         !< BUBBLE DYNAMICS
@@ -625,7 +625,7 @@ contains
         !< EULER-LAGRANGE COUPLING
         call s_smear_voidfraction()
         if (lag_params%solver_approach == 2) call s_add_rhs_sources(q_cons_vf, q_prim_vf, rhs_vf)
-
+#endif
     end subroutine s_compute_EL_coupled_solver
 
     !>  This procedure computes the speed of sound from a given driving pressure
@@ -713,7 +713,7 @@ contains
         type(scalar_field), dimension(sys_size), intent(inout) :: q_prim_vf
 
         integer :: i, j, k, l
-
+#if 0
         if (lag_params%cluster_type >= 4) then
             !$acc parallel loop collapse(4) gang vector default(present)
             do k = 0, p
@@ -789,7 +789,7 @@ contains
                 end do
             end do
         end do
-
+#endif
     end subroutine s_add_rhs_sources
 
     !> The purpose of this procedure is obtain the bubble driving pressure p_inf
@@ -820,6 +820,7 @@ contains
         integer :: mapCells_pinf, smearGrid, smearGridz
         logical :: celloutside
 
+#if 0
         scoord = mtn_s(bub_id, 1:3, 2)
         f_pinfl = 0._wp
 
@@ -1016,6 +1017,7 @@ contains
             end if
 
         end if
+#endif
 
     end subroutine s_get_pinf
 
@@ -1028,6 +1030,7 @@ contains
 
         integer :: k
 
+#if 0
         if (time_stepper == 1) then ! 1st order TVD RK
             !$acc parallel loop gang vector default(present) private(k)
             do k = 1, nBubs
@@ -1139,7 +1142,7 @@ contains
             end if
 
         end if
-
+#endif
     end subroutine s_update_lagrange_tdv_rk
 
     !>  This subroutine updates the Euler-Lagrange temporal variables before entering to the next time-stage in the RKCK stepper.
@@ -1157,7 +1160,7 @@ contains
         integer :: i, j, k, l, q
         real(wp) :: radiusOld, velOld, aux_glb
         integer :: remove_id
-
+#if 0
         call s_transfer_data_to_tmp()
 
         lag_largestep = 0._wp
@@ -1219,7 +1222,7 @@ contains
                 end do
             end do
         end do
-
+#endif
     end subroutine s_update_tmp_rkck
 
     !>  This subroutine calculates the maximum error between the 4th and 5th order Runge-Kutta-Cash-Karp solutions
@@ -1233,7 +1236,7 @@ contains
 
         real(wp) :: erraux, errb
         integer :: i, j, k
-
+#if 0
         rkck_errmax = 0._wp
         !$acc parallel loop gang vector default(present) reduction(MAX: rkck_errmax) copy(rkck_errmax)
         do k = 1, nBubs
@@ -1267,7 +1270,7 @@ contains
             end do
             rkck_errmax = max(rkck_errmax, errb)
         end do
-
+#endif
     end subroutine s_calculate_rkck_truncation_error
 
     !>  This subroutine updates the conservative fields and the lagrangian variables after accepting the performed time step.
@@ -1536,7 +1539,7 @@ contains
         integer, intent(in) :: dir
 
         integer :: i, j, k
-
+#if 0
         if (dir == 1) then
             ! Gradient in x dir.
             !$acc parallel loop collapse(3) gang vector default(present)
@@ -1582,7 +1585,7 @@ contains
                 end do
             end if
         end if
-
+#endif
     end subroutine s_gradient_dir
 
     !> Subroutine that writes on each time step the changes of the lagrangian bubbles.
