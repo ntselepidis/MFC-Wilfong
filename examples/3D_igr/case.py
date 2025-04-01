@@ -18,7 +18,7 @@ y1 = l
 z0 = -l
 z1 = l
 
-Nx = 300
+Nx = 200
 Ny = Nx
 Nz = Nx
 
@@ -71,7 +71,7 @@ data = {
     "elliptic_smoothing_iters": 50,
     # Database Structure Parameters
     "format": 1,
-    "precision": 2,
+    "precision": 1,
     "prim_vars_wrt": "T",
     "parallel_io": "T",
     # Fluid Parameters (Gas)

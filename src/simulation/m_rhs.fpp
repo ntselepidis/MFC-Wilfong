@@ -1002,7 +1002,7 @@ contains
             !end if
         !end if
 
-        !call cpu_time(t_finish)
+        call cpu_time(t_finish)
 
         if (t_step >= 2) then
             time_avg = (abs(t_finish - t_start) + (t_step - 2)*time_avg)/(t_step - 1)
