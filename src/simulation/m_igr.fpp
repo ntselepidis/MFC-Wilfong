@@ -665,7 +665,7 @@ contains
                                 end if
 
                                 if (q == 0) then
-                                    jac_rhs(i,j,k) = alf_igr * (2._wp*(dvel(1,2)*dvel(2,1) &
+                                    jac_rhs(j,k,l) = alf_igr * (2._wp*(dvel(1,2)*dvel(2,1)) &
                                         + dvel(1,1)**2_wp + dvel(2,2)**2_wp &
                                         + (dvel(1,1) + dvel(2,2))**2_wp)
                                 end if
@@ -1168,15 +1168,15 @@ contains
                                 if (q == 0) dvel(:,3) = dvel_small
                                 if (q > -2 .and. viscous) then
                                     vflux_L_arr(2) = vflux_L_arr(2) + coeff_L(q)*(dvel_small(1))
-                                    vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(-2._wp/3._wp*dvel_small(3)
+                                    vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(-2._wp/3._wp*dvel_small(3))
                                 end if
                                 if (q < 3 .and. viscous) then
                                     vflux_R_arr(2) = vflux_R_arr(2) + coeff_R(q)*(dvel_small(1))
-                                    vflux_R_arr(3) = vflux_R_arr(3) + coeff_R(q)*(-2._wp/3._wp*dvel_small(3)
+                                    vflux_R_arr(3) = vflux_R_arr(3) + coeff_R(q)*(-2._wp/3._wp*dvel_small(3))
                                 end if
 
                                 if (q == 0) then
-                                    jac_rhs(i,j,k) = alf_igr * (2._wp*(dvel(1,2)*dvel(2,1) &
+                                    jac_rhs(j,k,l) = alf_igr * (2._wp*(dvel(1,2)*dvel(2,1) &
                                         + dvel(1,3)*dvel(3,1) &
                                         + dvel(2,3)*dvel(3,2)) &
                                         + dvel(1,1)**2_wp + dvel(2,2)**2_wp &
