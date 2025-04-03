@@ -397,6 +397,7 @@ contains
 
                             !$acc loop seq 
                             do q = -2, 3
+                                rho_L(q) = 0._wp
                                 !$acc loop seq
                                 do i = 1, num_fluids
                                     rho_L(q) = rho_L(q) + q_prim_vf(i)%sf(j+q,k,l)
@@ -472,6 +473,7 @@ contains
 
                             !$acc loop seq 
                             do q = -2, 3
+                                rho_L(q) = 0._wp
                                 !$acc loop seq
                                 do i = 1, num_fluids
                                     rho_L(q) = rho_L(q) + q_prim_vf(i)%sf(j+q,k,l)
@@ -675,13 +677,13 @@ contains
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)*gammas_sf(0)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)*gammas_sf(1)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j+3,k,l)**2._wp/(rho_sf(3,0,1)*gammas_sf(3)) )
 
-                                pres_R = pres_R - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)*gammas_sf(1)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)*gammas_sf(0)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
@@ -1110,13 +1112,13 @@ contains
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)*gammas_sf(0)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)*gammas_sf(1)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j+3,k,l)**2._wp/(rho_sf(3,0,1)*gammas_sf(3)) )
 
-                                pres_R = pres_R - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)*gammas_sf(1)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)*gammas_sf(0)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
@@ -1662,13 +1664,13 @@ contains
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)*gammas_sf(0)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)*gammas_sf(1)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j,k+3,l)**2._wp/(rho_sf(3,0,2)*gammas_sf(3)) )
 
-                                pres_R = pres_R - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)*gammas_sf(1)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)*gammas_sf(0)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
@@ -2099,13 +2101,13 @@ contains
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)*gammas_sf(0)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)*gammas_sf(1)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j,k+3,l)**2._wp/(rho_sf(3,0,2)*gammas_sf(3)) )
 
-                                pres_R = pres_R - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)*gammas_sf(1)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)*gammas_sf(0)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
@@ -2628,13 +2630,13 @@ contains
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-1)**2._wp/(rho_sf(-1,0,3)*gammas_sf(-1)) + &
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-1)**2._wp/(rho_sf(-1,0,3)*gammas_sf(-1)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,3)*gammas_sf(0)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+1)**2._wp/(rho_sf(1,0,3)*gammas_sf(1)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+2)**2._wp/(rho_sf(2,0,3)*gammas_sf(2)) + &
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+3)**2._wp/(rho_sf(3,0,3)*gammas_sf(3)) )
 
-                                pres_R = pres_R - (1._wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+2)**2._wp/(rho_sf(2,0,3)*gammas_sf(2)) + &
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+2)**2._wp/(rho_sf(2,0,3)*gammas_sf(2)) + &
                                                 27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+1)**2._wp/(rho_sf(1,0,3)*gammas_sf(1)) + &
                                                 47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,3)*gammas_sf(0)) -   &
                                                 13._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-1)**2._wp/(rho_sf(-1,0,3)*gammas_sf(-1)) + &
