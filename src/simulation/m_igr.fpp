@@ -1639,7 +1639,6 @@ contains
                                     q_prim_vf(momxb+1)%sf(j-2,k+q,l)/rho_sf_small(-2) - &
                                     q_prim_vf(momxb+1)%sf(j+2,k+q,l)/rho_sf_small(2) )
 
-                                    if (q == 0) dvel(:,1) = dvel_small
                                     if (q > -2) then
                                         vflux_L_arr(1) = vflux_L_arr(1) + coeff_L(q)*(dvel_small(2))
                                         vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(-2._wp*dvel_small(1))/3._wp
@@ -2086,7 +2085,6 @@ contains
                                     q_prim_vf(momxb+1)%sf(j-2,k+q,l)/rho_sf_small(-2) - &
                                     q_prim_vf(momxb+1)%sf(j+2,k+q,l)/rho_sf_small(2) )
 
-                                    if (q == 0) dvel(:,1) = dvel_small
                                     if (q > -2) then
                                         vflux_L_arr(1) = vflux_L_arr(1) + coeff_L(q)*(dvel_small(2))
                                         vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(-2._wp*dvel_small(1))/3._wp
@@ -2633,7 +2631,6 @@ contains
                                     q_prim_vf(momxb+2)%sf(j-2,k,l+q)/rho_sf_small(-2) - &
                                     q_prim_vf(momxb+2)%sf(j+2,k,l+q)/rho_sf_small(2) )
 
-                                    if (q == 0) dvel(:,1) = dvel_small
                                     if (q > -2) then
                                         vflux_L_arr(1) = vflux_L_arr(1) + coeff_L(q)*(dvel_small(3))
                                         vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(-2._wp*dvel_small(1))/3._wp
