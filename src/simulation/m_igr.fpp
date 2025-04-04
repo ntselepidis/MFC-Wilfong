@@ -1177,11 +1177,11 @@ contains
                                 if (q == 0) dvel(:,3) = dvel_small
                                 if (q > -2 .and. viscous) then
                                     vflux_L_arr(2) = vflux_L_arr(2) + coeff_L(q)*(dvel_small(1))
-                                    vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(-2._wp/3._wp*dvel_small(3))
+                                    vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(-2._wp*dvel_small(3))/3._wp
                                 end if
                                 if (q < 3 .and. viscous) then
                                     vflux_R_arr(2) = vflux_R_arr(2) + coeff_R(q)*(dvel_small(1))
-                                    vflux_R_arr(3) = vflux_R_arr(3) + coeff_R(q)*(-2._wp/3._wp*dvel_small(3))
+                                    vflux_R_arr(3) = vflux_R_arr(3) + coeff_R(q)*(-2._wp*dvel_small(3))/3._wp
                                 end if
 
                                 if (q == 0) then
@@ -2164,11 +2164,11 @@ contains
                                     q_prim_vf(momxb+2)%sf(j,k+q,l+2)/rho_sf_small(2) )
                                     if (q > -2) then
                                         vflux_L_arr(2) = vflux_L_arr(2) + coeff_L(q)*(dvel_small(2))
-                                        vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(-2._wp/3._wp*dvel_small(3))
+                                        vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(-2._wp*dvel_small(3))/3._wp
                                     end if
                                     if (q < 3) then
                                         vflux_R_arr(2) = vflux_R_arr(2) + coeff_R(q)*(dvel_small(2))
-                                        vflux_R_arr(3) = vflux_R_arr(3) + coeff_R(q)*(-2._wp/3._wp*dvel_small(3))
+                                        vflux_R_arr(3) = vflux_R_arr(3) + coeff_R(q)*(-2._wp*dvel_small(3))/3._wp
                                     end if
                                 end do
                             end if
@@ -2707,12 +2707,12 @@ contains
                                     if (q > -2) then
                                         vflux_L_arr(1) = vflux_L_arr(1) + coeff_L(q)*(dvel_small(1))
                                         vflux_L_arr(2) = vflux_L_arr(2) + coeff_L(q)*(dvel_small(2))
-                                        vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(4._wp/3._wp*dvel_small(3))
+                                        vflux_L_arr(3) = vflux_L_arr(3) + coeff_L(q)*(4._wp*dvel_small(3))/3._wp
                                     end if
                                     if (q < 3) then
                                         vflux_R_arr(1) = vflux_R_arr(1) + coeff_R(q)*(dvel_small(1))
                                         vflux_R_arr(2) = vflux_R_arr(2) + coeff_R(q)*(dvel_small(2))
-                                        vflux_R_arr(3) = vflux_R_arr(3) + coeff_R(q)*(4._wp/3._wp*dvel_small(3))
+                                        vflux_R_arr(3) = vflux_R_arr(3) + coeff_R(q)*(4._wp*dvel_small(3))/3._wp
                                     end if
                                 end do
                             end if
