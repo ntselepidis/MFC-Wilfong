@@ -663,32 +663,35 @@ contains
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j-2,k,l)/rho_sf(-2,0,1)) 
                             end do
 
-                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j-1,k,l)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j+1,k,l)-pi_infs_sf(1))/gammas_sf(1) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j+2,k,l)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j+3,k,l)-pi_infs_sf(3))/gammas_sf(3))
+                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j-1,k,l)-pi_infs_sf(-1))/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,1)*gammas_sf(0)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j+1,k,l)-pi_infs_sf(1))/(rho_sf(1,0,1)*gammas_sf(1)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j+2,k,l)-pi_infs_sf(2))/(rho_sf(2,0,1)*gammas_sf(2)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j+3,k,l)-pi_infs_sf(3))/(rho_sf(3,0,1)*gammas_sf(3)))
 
-                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j+2,k,l)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j+1,k,l)-pi_infs_sf(1))/gammas_sf(1) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j-1,k,l)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j-2,k,l)-pi_infs_sf(-2))/gammas_sf(-2))
+                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j+2,k,l)-pi_infs_sf(2))/(rho_sf(2,0,1)*gammas_sf(2)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j+1,k,l)-pi_infs_sf(1))/(rho_sf(1,0,1)*gammas_sf(1)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,1)*gammas_sf(0)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j-1,k,l)-pi_infs_sf(-1))/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j-2,k,l)-pi_infs_sf(-2))/(rho_sf(-2,0,1)*gammas_sf(-2)))
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)*gammas_sf(0)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)*gammas_sf(1)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j+3,k,l)**2._wp/(rho_sf(3,0,1)*gammas_sf(3)) )
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)**2._wp*gammas_sf(-1)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)**2._wp*gammas_sf(0)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)**2._wp*gammas_sf(1)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)**2._wp*gammas_sf(2)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j+3,k,l)**2._wp/(rho_sf(3,0,1)**2._wp*gammas_sf(3)) )
 
-                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)*gammas_sf(1)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)*gammas_sf(0)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j-2,k,l)**2._wp/(rho_sf(-2,0,1)*gammas_sf(-2)) )
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)**2._wp*gammas_sf(2)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)**2._wp*gammas_sf(1)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)**2._wp*gammas_sf(0)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)**2._wp*gammas_sf(-1)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j-2,k,l)**2._wp/(rho_sf(-2,0,1)**2._wp*gammas_sf(-2)) )
                             end do
+
+                            pres_L = rho_L*pres_L
+                            pres_R = rho_R*pres_R
 
                             E_L = gamma_L*pres_L + pi_inf_L + 0.5_wp*rho_L*(vel_L(1)**2._wp + vel_L(2)**2._wp) 
                             E_R = gamma_R*pres_R + pi_inf_R + 0.5_wp*rho_R*(vel_R(1)**2._wp + vel_R(2)**2._wp)      
@@ -1098,32 +1101,35 @@ contains
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j-2,k,l)/rho_sf(-2,0,1)) 
                             end do
 
-                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j-1,k,l)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j+1,k,l)-pi_infs_sf(1))/gammas_sf(1) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j+2,k,l)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j+3,k,l)-pi_infs_sf(3))/gammas_sf(3))
+                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j-1,k,l)-pi_infs_sf(-1))/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,1)*gammas_sf(0)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j+1,k,l)-pi_infs_sf(1))/(rho_sf(1,0,1)*gammas_sf(1)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j+2,k,l)-pi_infs_sf(2))/(rho_sf(2,0,1)*gammas_sf(2)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j+3,k,l)-pi_infs_sf(3))/(rho_sf(3,0,1)*gammas_sf(3)))
 
-                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j+2,k,l)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j+1,k,l)-pi_infs_sf(1))/gammas_sf(1) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j-1,k,l)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j-2,k,l)-pi_infs_sf(-2))/gammas_sf(-2))
+                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j+2,k,l)-pi_infs_sf(2))/(rho_sf(2,0,1)*gammas_sf(2)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j+1,k,l)-pi_infs_sf(1))/(rho_sf(1,0,1)*gammas_sf(1)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,1)*gammas_sf(0)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j-1,k,l)-pi_infs_sf(-1))/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j-2,k,l)-pi_infs_sf(-2))/(rho_sf(-2,0,1)*gammas_sf(-2)))
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)*gammas_sf(0)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)*gammas_sf(1)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j+3,k,l)**2._wp/(rho_sf(3,0,1)*gammas_sf(3)) )
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)**2._wp*gammas_sf(-1)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)**2._wp*gammas_sf(0)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)**2._wp*gammas_sf(1)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)**2._wp*gammas_sf(2)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j+3,k,l)**2._wp/(rho_sf(3,0,1)**2._wp*gammas_sf(3)) )
 
-                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)*gammas_sf(2)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)*gammas_sf(1)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)*gammas_sf(0)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)*gammas_sf(-1)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j-2,k,l)**2._wp/(rho_sf(-2,0,1)*gammas_sf(-2)) )
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j+2,k,l)**2._wp/(rho_sf(2,0,1)**2._wp*gammas_sf(2)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j+1,k,l)**2._wp/(rho_sf(1,0,1)**2._wp*gammas_sf(1)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,1)**2._wp*gammas_sf(0)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j-1,k,l)**2._wp/(rho_sf(-1,0,1)**2._wp*gammas_sf(-1)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j-2,k,l)**2._wp/(rho_sf(-2,0,1)**2._wp*gammas_sf(-2)) )
                             end do
+
+                            pres_L = rho_L*pres_L
+                            pres_R = rho_R*pres_R
 
                             E_L = gamma_L*pres_L + pi_inf_L + 0.5_wp*rho_L*(vel_L(1)**2._wp + vel_L(2)**2._wp + vel_L(3)**2._wp) 
                             E_R = gamma_R*pres_R + pi_inf_R + 0.5_wp*rho_R*(vel_R(1)**2._wp + vel_R(2)**2._wp + vel_R(3)**2._wp)   
@@ -1650,33 +1656,35 @@ contains
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j,k-2,l)/rho_sf(-2,0,2)) 
                             end do
 
-                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k-1,l)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j,k+1,l)-pi_infs_sf(1))/gammas_sf(1) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j,k+2,l)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j,k+3,l)-pi_infs_sf(3))/gammas_sf(3))
+                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k-1,l)-pi_infs_sf(-1))/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,2)*gammas_sf(0)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j,k+1,l)-pi_infs_sf(1))/(rho_sf(1,0,2)*gammas_sf(1)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j,k+2,l)-pi_infs_sf(2))/(rho_sf(2,0,2)*gammas_sf(2)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j,k+3,l)-pi_infs_sf(3))/(rho_sf(3,0,2)*gammas_sf(3)))
 
-                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k+2,l)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j,k+1,l)-pi_infs_sf(1))/gammas_sf(1) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j,k-1,l)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j,k-2,l)-pi_infs_sf(-2))/gammas_sf(-2))
+                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k+2,l)-pi_infs_sf(2))/(rho_sf(2,0,2)*gammas_sf(2)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j,k+1,l)-pi_infs_sf(1))/(rho_sf(1,0,2)*gammas_sf(1)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,2)*gammas_sf(0)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j,k-1,l)-pi_infs_sf(-1))/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j,k-2,l)-pi_infs_sf(-2))/(rho_sf(-2,0,2)*gammas_sf(-2)))
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)*gammas_sf(0)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)*gammas_sf(1)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k+3,l)**2._wp/(rho_sf(3,0,2)*gammas_sf(3)) )
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)**2._wp*gammas_sf(-1)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)**2._wp*gammas_sf(0)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)**2._wp*gammas_sf(1)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)**2._wp*gammas_sf(2)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k+3,l)**2._wp/(rho_sf(3,0,2)**2._wp*gammas_sf(3)) )
 
-                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)*gammas_sf(1)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)*gammas_sf(0)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k-2,l)**2._wp/(rho_sf(-2,0,2)*gammas_sf(-2)) )
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)**2._wp*gammas_sf(2)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)**2._wp*gammas_sf(1)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)**2._wp*gammas_sf(0)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)**2._wp*gammas_sf(-1)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k-2,l)**2._wp/(rho_sf(-2,0,2)**2._wp*gammas_sf(-2)) )
                             end do
 
+                            pres_L = rho_L*pres_L
+                            pres_R = rho_R*pres_R
 
                             E_L = gamma_L*pres_L + pi_inf_L + 0.5_wp*rho_L*(vel_L(1)**2._wp + vel_L(2)**2._wp) 
                             E_R = gamma_R*pres_R + pi_inf_R + 0.5_wp*rho_R*(vel_R(1)**2._wp + vel_R(2)**2._wp)   
@@ -2087,32 +2095,35 @@ contains
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j,k-2,l)/rho_sf(-2,0,2)) 
                             end do
 
-                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k-1,l)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j,k+1,l)-pi_infs_sf(1))/gammas_sf(1) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j,k+2,l)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j,k+3,l)-pi_infs_sf(3))/gammas_sf(3))
+                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k-1,l)-pi_infs_sf(-1))/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,2)*gammas_sf(0)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j,k+1,l)-pi_infs_sf(1))/(rho_sf(1,0,2)*gammas_sf(1)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j,k+2,l)-pi_infs_sf(2))/(rho_sf(2,0,2)*gammas_sf(2)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j,k+3,l)-pi_infs_sf(3))/(rho_sf(3,0,2)*gammas_sf(3)))
 
-                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k+2,l)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j,k+1,l)-pi_infs_sf(1))/gammas_sf(1) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j,k-1,l)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j,k-2,l)-pi_infs_sf(-2))/gammas_sf(-2))
+                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k+2,l)-pi_infs_sf(2))/(rho_sf(2,0,2)*gammas_sf(2)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j,k+1,l)-pi_infs_sf(1))/(rho_sf(1,0,2)*gammas_sf(1)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,2)*gammas_sf(0)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j,k-1,l)-pi_infs_sf(-1))/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j,k-2,l)-pi_infs_sf(-2))/(rho_sf(-2,0,2)*gammas_sf(-2)))
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)*gammas_sf(0)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)*gammas_sf(1)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k+3,l)**2._wp/(rho_sf(3,0,2)*gammas_sf(3)) )
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)**2._wp*gammas_sf(-1)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)**2._wp*gammas_sf(0)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)**2._wp*gammas_sf(1)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)**2._wp*gammas_sf(2)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k+3,l)**2._wp/(rho_sf(3,0,2)**2._wp*gammas_sf(3)) )
 
-                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)*gammas_sf(2)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)*gammas_sf(1)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)*gammas_sf(0)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)*gammas_sf(-1)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k-2,l)**2._wp/(rho_sf(-2,0,2)*gammas_sf(-2)) )
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k+2,l)**2._wp/(rho_sf(2,0,2)**2._wp*gammas_sf(2)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k+1,l)**2._wp/(rho_sf(1,0,2)**2._wp*gammas_sf(1)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,2)**2._wp*gammas_sf(0)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k-1,l)**2._wp/(rho_sf(-1,0,2)**2._wp*gammas_sf(-1)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k-2,l)**2._wp/(rho_sf(-2,0,2)**2._wp*gammas_sf(-2)) )
                             end do
+
+                            pres_L = rho_L*pres_L
+                            pres_R = rho_R*pres_R
 
                             E_L = gamma_L*pres_L + pi_inf_L + 0.5_wp*rho_L*(vel_L(1)**2._wp + vel_L(2)**2._wp + vel_L(3)**2._wp) 
                             E_R = gamma_R*pres_R + pi_inf_R + 0.5_wp*rho_R*(vel_R(1)**2._wp + vel_R(2)**2._wp + vel_R(3)**2._wp)    
@@ -2616,32 +2627,35 @@ contains
                                                 2._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-2)/rho_sf(-2,0,3)) 
                             end do
 
-                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k,l-1)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l+1)-pi_infs_sf(1))/gammas_sf(1) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j,k,l+2)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j,k,l+3)-pi_infs_sf(3))/gammas_sf(3))
+                            pres_L = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k,l-1)-pi_infs_sf(-1))/(rho_sf(-1,0,3)*gammas_sf(-1)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,3)*gammas_sf(0)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l+1)-pi_infs_sf(1))/(rho_sf(1,0,3)*gammas_sf(1)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j,k,l+2)-pi_infs_sf(2))/(rho_sf(2,0,3)*gammas_sf(2)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j,k,l+3)-pi_infs_sf(3))/(rho_sf(3,0,3)*gammas_sf(3)))
 
-                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k,l+2)-pi_infs_sf(2))/gammas_sf(2) + &
-                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l+1)-pi_infs_sf(1))/gammas_sf(1) + &
-                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/gammas_sf(0) -   &
-                                                13._wp * (q_prim_vf(E_idx)%sf(j,k,l-1)-pi_infs_sf(-1))/gammas_sf(-1) + &
-                                                2._wp * (q_prim_vf(E_idx)%sf(j,k,l-2)-pi_infs_sf(-2))/gammas_sf(-2))
+                            pres_R = (1._wp/60._wp) * (-3._wp * (q_prim_vf(E_idx)%sf(j,k,l+2)-pi_infs_sf(2))/(rho_sf(2,0,3)*gammas_sf(2)) + &
+                                                27._wp * (q_prim_vf(E_idx)%sf(j,k,l+1)-pi_infs_sf(1))/(rho_sf(1,0,3)*gammas_sf(1)) + &
+                                                47._wp * (q_prim_vf(E_idx)%sf(j,k,l)-pi_infs_sf(0))/(rho_sf(0,0,3)*gammas_sf(0)) -   &
+                                                13._wp * (q_prim_vf(E_idx)%sf(j,k,l-1)-pi_infs_sf(-1))/(rho_sf(-1,0,3)*gammas_sf(-1)) + &
+                                                2._wp * (q_prim_vf(E_idx)%sf(j,k,l-2)-pi_infs_sf(-2))/(rho_sf(-2,0,3)*gammas_sf(-2)))
 
                             !$acc loop seq
                             do i = 1, num_dims
-                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-1)**2._wp/(rho_sf(-1,0,3)*gammas_sf(-1)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,3)*gammas_sf(0)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+1)**2._wp/(rho_sf(1,0,3)*gammas_sf(1)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+2)**2._wp/(rho_sf(2,0,3)*gammas_sf(2)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+3)**2._wp/(rho_sf(3,0,3)*gammas_sf(3)) )
+                                pres_L = pres_L - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-1)**2._wp/(rho_sf(-1,0,3)**2._wp*gammas_sf(-1)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,3)**2._wp*gammas_sf(0)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+1)**2._wp/(rho_sf(1,0,3)**2._wp*gammas_sf(1)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+2)**2._wp/(rho_sf(2,0,3)**2._wp*gammas_sf(2)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+3)**2._wp/(rho_sf(3,0,3)**2._wp*gammas_sf(3)) )
 
-                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+2)**2._wp/(rho_sf(2,0,3)*gammas_sf(2)) + &
-                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+1)**2._wp/(rho_sf(1,0,3)*gammas_sf(1)) + &
-                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,3)*gammas_sf(0)) -   &
-                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-1)**2._wp/(rho_sf(-1,0,3)*gammas_sf(-1)) + &
-                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-2)**2._wp/(rho_sf(-2,0,3)*gammas_sf(-2)) )
+                                pres_R = pres_R - (0.5_wp/60._wp) * (-3._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+2)**2._wp/(rho_sf(2,0,3)**2._wp*gammas_sf(2)) + &
+                                                27._wp * q_prim_vf(momxb+i-1)%sf(j,k,l+1)**2._wp/(rho_sf(1,0,3)**2._wp*gammas_sf(1)) + &
+                                                47._wp * q_prim_vf(momxb+i-1)%sf(j,k,l)**2._wp/(rho_sf(0,0,3)**2._wp*gammas_sf(0)) -   &
+                                                13._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-1)**2._wp/(rho_sf(-1,0,3)**2._wp*gammas_sf(-1)) + &
+                                                2._wp * q_prim_vf(momxb+i-1)%sf(j,k,l-2)**2._wp/(rho_sf(-2,0,3)**2._wp*gammas_sf(-2)) )
                             end do
+
+                            pres_L = rho_L*pres_L
+                            pres_R = rho_R*pres_R
 
                             E_L = gamma_L*pres_L + pi_inf_L + 0.5_wp*rho_L*(vel_L(1)**2._wp + vel_L(2)**2._wp + vel_L(3)**2._wp) 
                             E_R = gamma_R*pres_R + pi_inf_R + 0.5_wp*rho_R*(vel_R(1)**2._wp + vel_R(2)**2._wp + vel_R(3)**2._wp)   
