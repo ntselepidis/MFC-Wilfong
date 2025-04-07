@@ -778,17 +778,17 @@ contains
                             !! duy & dvx
                             !$acc loop seq 
                             do q = -2, 3
-                                dvel1(q) = (1/(12._wp*dy(k))) * ( &
-                                8._wp*q_prim_vf(momxb)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
-                                8._wp*q_prim_vf(momxb)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
-                                q_prim_vf(momxb)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
-                                q_prim_vf(momxb)%sf(j+q,k+2,l)/rho_sf(q,2,2) )
+                                dvel1(q) = (1/(2._wp*dy(k))) * ( &
+                                1._wp*q_prim_vf(momxb)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
+                                1._wp*q_prim_vf(momxb)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
+                                0._wp*q_prim_vf(momxb)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
+                                0._wp*q_prim_vf(momxb)%sf(j+q,k+2,l)/rho_sf(q,2,2) )
 
-                                dvel2(q) = (1/(12._wp*dx(j))) * ( &
-                                8._wp*q_prim_vf(momxb+1)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
-                                8._wp*q_prim_vf(momxb+1)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
-                                q_prim_vf(momxb+1)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
-                                q_prim_vf(momxb+1)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
+                                dvel2(q) = (1/(2._wp*dx(j))) * ( &
+                                1._wp*q_prim_vf(momxb+1)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
+                                1._wp*q_prim_vf(momxb+1)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
+                                0._wp*q_prim_vf(momxb+1)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
+                                0._wp*q_prim_vf(momxb+1)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
                             end do
 
                             jac_rhs(j, k, l) = alf_igr* (2._wp*dvel1(0)*dvel2(0))
@@ -867,18 +867,18 @@ contains
                             !! dux & dvy
                             !$acc loop seq
                             do q = -2, 3
-                                dvel1(q) = (1/(12._wp*dx(j))) * ( &
-                                8._wp*q_prim_vf(momxb)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
-                                8._wp*q_prim_vf(momxb)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
-                                q_prim_vf(momxb)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
-                                q_prim_vf(momxb)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
+                                dvel1(q) = (1/(2._wp*dx(j))) * ( &
+                                1._wp*q_prim_vf(momxb)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
+                                1._wp*q_prim_vf(momxb)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
+                                0._wp*q_prim_vf(momxb)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
+                                0._wp*q_prim_vf(momxb)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
 
 
-                                dvel2(q) = (1/(12._wp*dy(k))) * ( &
-                                8._wp*q_prim_vf(momxb+1)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
-                                8._wp*q_prim_vf(momxb+1)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
-                                q_prim_vf(momxb+1)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
-                                q_prim_vf(momxb+1)%sf(j+q,k+2,l)/rho_sf(q,2,2) )
+                                dvel2(q) = (1/(2._wp*dy(k))) * ( &
+                                1._wp*q_prim_vf(momxb+1)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
+                                1._wp*q_prim_vf(momxb+1)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
+                                0._wp*q_prim_vf(momxb+1)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
+                                0._wp*q_prim_vf(momxb+1)%sf(j+q,k+2,l)/rho_sf(q,2,2) )
                             end do
 
                             jac_rhs(j, k, l) = jac_rhs(j,k,l) + alf_igr* (dvel1(0)**2_wp + dvel2(0)**2_wp + (dvel1(0) + dvel2(0))**2_wp)
@@ -1226,17 +1226,17 @@ contains
                             !! duy & dvx
                             !$acc loop seq
                             do q = -2, 3
-                                dvel1(q) = (1/(12._wp*dy(k))) * ( &
-                                8._wp*q_prim_vf(momxb)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
-                                8._wp*q_prim_vf(momxb)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
-                                q_prim_vf(momxb)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
-                                q_prim_vf(momxb)%sf(j+q,k+2,l)/rho_sf(q,2,2) )
+                                dvel1(q) = (1/(2._wp*dy(k))) * ( &
+                                1._wp*q_prim_vf(momxb)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
+                                1._wp*q_prim_vf(momxb)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
+                                0._wp*q_prim_vf(momxb)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
+                                0._wp*q_prim_vf(momxb)%sf(j+q,k+2,l)/rho_sf(q,2,2) )
 
-                                dvel2(q) = (1/(12._wp*dx(j))) * ( &
-                                8._wp*q_prim_vf(momxb+1)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
-                                8._wp*q_prim_vf(momxb+1)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
-                                q_prim_vf(momxb+1)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
-                                q_prim_vf(momxb+1)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
+                                dvel2(q) = (1/(2._wp*dx(j))) * ( &
+                                1._wp*q_prim_vf(momxb+1)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
+                                1._wp*q_prim_vf(momxb+1)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
+                                0._wp*q_prim_vf(momxb+1)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
+                                0._wp*q_prim_vf(momxb+1)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
                             end do
 
                             jac_rhs(j, k, l) = alf_igr* (2._wp*dvel1(0)*dvel2(0))
@@ -1311,17 +1311,17 @@ contains
                             !! duz & dwx
                             !$acc loop seq 
                             do q = -2, 3
-                                dvel1(q) = (1/(12._wp*dz(l))) * ( &
-                                8._wp*q_prim_vf(momxb)%sf(j+q,k,l+1)/rho_sf(q,1,3) - &
-                                8._wp*q_prim_vf(momxb)%sf(j+q,k,l-1)/rho_sf(q,-1,3) + &
-                                q_prim_vf(momxb)%sf(j+q,k,l-2)/rho_sf(q,-2,3) - &
-                                q_prim_vf(momxb)%sf(j+q,k,l+2)/rho_sf(q,2,3) )
+                                dvel1(q) = (1/(2._wp*dz(l))) * ( &
+                                1._wp*q_prim_vf(momxb)%sf(j+q,k,l+1)/rho_sf(q,1,3) - &
+                                1._wp*q_prim_vf(momxb)%sf(j+q,k,l-1)/rho_sf(q,-1,3) + &
+                                0._wp*q_prim_vf(momxb)%sf(j+q,k,l-2)/rho_sf(q,-2,3) - &
+                                0._wp*q_prim_vf(momxb)%sf(j+q,k,l+2)/rho_sf(q,2,3) )
 
-                                dvel2(q) = (1/(12._wp*dx(j))) * ( &
-                                8._wp*q_prim_vf(momxb+2)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
-                                8._wp*q_prim_vf(momxb+2)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
-                                q_prim_vf(momxb+2)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
-                                q_prim_vf(momxb+2)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
+                                dvel2(q) = (1/(2._wp*dx(j))) * ( &
+                                1._wp*q_prim_vf(momxb+2)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
+                                1._wp*q_prim_vf(momxb+2)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
+                                0._wp*q_prim_vf(momxb+2)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
+                                0._wp*q_prim_vf(momxb+2)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
                             end do
 
                             jac_rhs(j, k, l) = jac_rhs(j,k,l) + alf_igr* (2._wp * dvel1(0)* dvel2(0))
@@ -1356,17 +1356,17 @@ contains
                             !! dvz & dwy
                             !$acc loop seq
                             do q = -2, 3
-                                dvel1(q) = (1/(12._wp*dz(l))) * ( &
-                                8._wp*q_prim_vf(momxb+1)%sf(j+q,k,l+1)/rho_sf(q,1,3) - &
-                                8._wp*q_prim_vf(momxb+1)%sf(j+q,k,l-1)/rho_sf(q,-1,3) + &
-                                q_prim_vf(momxb+1)%sf(j+q,k,l-2)/rho_sf(q,-2,3) - &
-                                q_prim_vf(momxb+1)%sf(j+q,k,l+2)/rho_sf(q,2,3) )
+                                dvel1(q) = (1/(2._wp*dz(l))) * ( &
+                                1._wp*q_prim_vf(momxb+1)%sf(j+q,k,l+1)/rho_sf(q,1,3) - &
+                                1._wp*q_prim_vf(momxb+1)%sf(j+q,k,l-1)/rho_sf(q,-1,3) + &
+                                0._wp*q_prim_vf(momxb+1)%sf(j+q,k,l-2)/rho_sf(q,-2,3) - &
+                                0._wp*q_prim_vf(momxb+1)%sf(j+q,k,l+2)/rho_sf(q,2,3) )
 
-                                dvel2(q) = (1/(12._wp*dy(k))) * ( &
-                                8._wp*q_prim_vf(momxb+2)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
-                                8._wp*q_prim_vf(momxb+2)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
-                                q_prim_vf(momxb+2)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
-                                q_prim_vf(momxb+2)%sf(j+q,k+2,l)/rho_sf(q,2,2))
+                                dvel2(q) = (1/(2._wp*dy(k))) * ( &
+                                1._wp*q_prim_vf(momxb+2)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
+                                1._wp*q_prim_vf(momxb+2)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
+                                0._wp*q_prim_vf(momxb+2)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
+                                0._wp*q_prim_vf(momxb+2)%sf(j+q,k+2,l)/rho_sf(q,2,2))
                             end do
 
                             jac_rhs(j,k,l) = jac_rhs(j,k,l) + alf_igr*(2._wp*dvel1(0)*dvel2(0))
@@ -1374,18 +1374,18 @@ contains
                             !! dux & dvy
                             !$acc loop seq
                             do q = -2, 3
-                                dvel1(q) = (1/(12._wp*dx(j))) * ( &
-                                8._wp*q_prim_vf(momxb)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
-                                8._wp*q_prim_vf(momxb)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
-                                q_prim_vf(momxb)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
-                                q_prim_vf(momxb)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
+                                dvel1(q) = (1/(2._wp*dx(j))) * ( &
+                                1._wp*q_prim_vf(momxb)%sf(j+1+q,k,l)/rho_sf(q,1,1) - &
+                                1._wp*q_prim_vf(momxb)%sf(j-1+q,k,l)/rho_sf(q,-1,1) + &
+                                0._wp*q_prim_vf(momxb)%sf(j-2+q,k,l)/rho_sf(q,-2,1) - &
+                                0._wp*q_prim_vf(momxb)%sf(j+2+q,k,l)/rho_sf(q,2,1) )
 
 
-                                dvel2(q) = (1/(12._wp*dy(k))) * ( &
-                                8._wp*q_prim_vf(momxb+1)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
-                                8._wp*q_prim_vf(momxb+1)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
-                                q_prim_vf(momxb+1)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
-                                q_prim_vf(momxb+1)%sf(j+q,k+2,l)/rho_sf(q,2,2) )
+                                dvel2(q) = (1/(2._wp*dy(k))) * ( &
+                                1._wp*q_prim_vf(momxb+1)%sf(j+q,k+1,l)/rho_sf(q,1,2) - &
+                                1._wp*q_prim_vf(momxb+1)%sf(j+q,k-1,l)/rho_sf(q,-1,2) + &
+                                0._wp*q_prim_vf(momxb+1)%sf(j+q,k-2,l)/rho_sf(q,-2,2) - &
+                                0._wp*q_prim_vf(momxb+1)%sf(j+q,k+2,l)/rho_sf(q,2,2) )
                             end do
 
                             jac_rhs(j, k, l) = jac_rhs(j,k,l) + alf_igr* (dvel1(0)**2_wp + dvel2(0)**2_wp)
@@ -1422,11 +1422,11 @@ contains
                             do q = -2, 3
                                 dvel1(q) = dvel1(q) + dvel2(q)
 
-                                dvel2(q) = (1/(12._wp*dz(l))) * ( &
-                                8._wp*q_prim_vf(momxb+2)%sf(j+q,k,l+1)/rho_sf(q,1,3) - &
-                                8._wp*q_prim_vf(momxb+2)%sf(j+q,k,l-1)/rho_sf(q,-1,3) + &
-                                q_prim_vf(momxb+2)%sf(j+q,k,l-2)/rho_sf(q,-2,3) - &
-                                q_prim_vf(momxb+2)%sf(j+q,k,l+2)/rho_sf(q,2,3) )
+                                dvel2(q) = (1/(2._wp*dz(l))) * ( &
+                                1._wp*q_prim_vf(momxb+2)%sf(j+q,k,l+1)/rho_sf(q,1,3) - &
+                                1._wp*q_prim_vf(momxb+2)%sf(j+q,k,l-1)/rho_sf(q,-1,3) + &
+                                0._wp*q_prim_vf(momxb+2)%sf(j+q,k,l-2)/rho_sf(q,-2,3) - &
+                                0._wp*q_prim_vf(momxb+2)%sf(j+q,k,l+2)/rho_sf(q,2,3) )
                             end do
 
                             jac_rhs(j,k,l) = jac_rhs(j,k,l) + alf_igr * (dvel2(0) **2_wp + (dvel1(0) + dvel2(0))**2_wp)
@@ -1774,18 +1774,18 @@ contains
                                 !! duy & dvx
                                 !$acc loop seq
                                 do q = -2, 3
-                                    dvel1(q) = (1/(12._wp*dy(k))) * ( &
-                                    8._wp*q_prim_vf(momxb)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
-                                    8._wp*q_prim_vf(momxb)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
-                                    q_prim_vf(momxb)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
-                                    q_prim_vf(momxb)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
+                                    dvel1(q) = (1/(2._wp*dy(k))) * ( &
+                                    1._wp*q_prim_vf(momxb)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
+                                    1._wp*q_prim_vf(momxb)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
+                                    0._wp*q_prim_vf(momxb)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
+                                    0._wp*q_prim_vf(momxb)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
 
 
-                                    dvel2(q) = (1/(12._wp*dx(j))) * ( &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j+1,k+q,l)/rho_sf(q,1,1) - &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j-1,k+q,l)/rho_sf(q,-1,1) + &
-                                    q_prim_vf(momxb+1)%sf(j-2,k+q,l)/rho_sf(q,-2,1) - &
-                                    q_prim_vf(momxb+1)%sf(j+2,k+q,l)/rho_sf(q,2,1) )
+                                    dvel2(q) = (1/(2._wp*dx(j))) * ( &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j+1,k+q,l)/rho_sf(q,1,1) - &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j-1,k+q,l)/rho_sf(q,-1,1) + &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j-2,k+q,l)/rho_sf(q,-2,1) - &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j+2,k+q,l)/rho_sf(q,2,1) )
                                 end do
 
                                 if(num_fluids > 1) then 
@@ -1854,17 +1854,17 @@ contains
                                 !! dvy & dux
                                 !$acc loop seq
                                 do q = -2, 3
-                                    dvel1(q) = (1/(12._wp*dy(k))) * ( &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
-                                    q_prim_vf(momxb+1)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
-                                    q_prim_vf(momxb+1)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
+                                    dvel1(q) = (1/(2._wp*dy(k))) * ( &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
 
-                                    dvel2(q) = (1/(12._wp*dx(j))) * ( &
-                                    8._wp*q_prim_vf(momxb)%sf(j+1,k+q,l)/rho_sf(q,1,1) - &
-                                    8._wp*q_prim_vf(momxb)%sf(j-1,k+q,l)/rho_sf(q,-1,1) + &
-                                    q_prim_vf(momxb)%sf(j-2,k+q,l)/rho_sf(q,-2,1) - &
-                                    q_prim_vf(momxb)%sf(j+2,k+q,l)/rho_sf(q,2,1) )
+                                    dvel2(q) = (1/(2._wp*dx(j))) * ( &
+                                    1._wp*q_prim_vf(momxb)%sf(j+1,k+q,l)/rho_sf(q,1,1) - &
+                                    1._wp*q_prim_vf(momxb)%sf(j-1,k+q,l)/rho_sf(q,-1,1) + &
+                                    0._wp*q_prim_vf(momxb)%sf(j-2,k+q,l)/rho_sf(q,-2,1) - &
+                                    0._wp*q_prim_vf(momxb)%sf(j+2,k+q,l)/rho_sf(q,2,1) )
                                 end do
 
                                 vflux_L = sum(coeff_L(-1:3)*(4._wp*dvel1(-1:3)-2._wp*dvel2(-1:3))/3._wp)
@@ -2222,17 +2222,17 @@ contains
                                 !! duy & dvx
                                 !$acc loop seq
                                 do q = -2, 3
-                                    dvel1(q) = (1/(12._wp*dy(k))) * ( &
-                                    8._wp*q_prim_vf(momxb)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
-                                    8._wp*q_prim_vf(momxb)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
-                                    q_prim_vf(momxb)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
-                                    q_prim_vf(momxb)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
+                                    dvel1(q) = (1/(2._wp*dy(k))) * ( &
+                                    1._wp*q_prim_vf(momxb)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
+                                    1._wp*q_prim_vf(momxb)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
+                                    0._wp*q_prim_vf(momxb)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
+                                    0._wp*q_prim_vf(momxb)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
 
-                                    dvel2(q) = (1/(12._wp*dx(j))) * ( &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j+1,k+q,l)/rho_sf(q,1,1) - &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j-1,k+q,l)/rho_sf(q,-1,1) + &
-                                    q_prim_vf(momxb+1)%sf(j-2,k+q,l)/rho_sf(q,-2,1) - &
-                                    q_prim_vf(momxb+1)%sf(j+2,k+q,l)/rho_sf(q,2,1) )
+                                    dvel2(q) = (1/(2._wp*dx(j))) * ( &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j+1,k+q,l)/rho_sf(q,1,1) - &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j-1,k+q,l)/rho_sf(q,-1,1) + &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j-2,k+q,l)/rho_sf(q,-2,1) - &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j+2,k+q,l)/rho_sf(q,2,1) )
                                 end do
        
                                 if(num_fluids > 1) then 
@@ -2302,17 +2302,17 @@ contains
                                 !! dwy & dvz
                                 !$acc loop seq
                                 do q = -2, 3
-                                    dvel1(q) = (1/(12._wp*dy(k))) * ( &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
-                                    q_prim_vf(momxb+2)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
-                                    q_prim_vf(momxb+2)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
+                                    dvel1(q) = (1/(2._wp*dy(k))) * ( &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
 
-                                    dvel2(q) = (1/(12._wp*dz(l))) * ( &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k+q,l+1)/rho_sf(q,1,3)  - &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k+q,l-1)/rho_sf(q,-1,3) + &
-                                    q_prim_vf(momxb+1)%sf(j,k+q,l-2)/rho_sf(q,-2,3) - &
-                                    q_prim_vf(momxb+1)%sf(j,k+q,l+2)/rho_sf(q,2,3) )
+                                    dvel2(q) = (1/(2._wp*dz(l))) * ( &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k+q,l+1)/rho_sf(q,1,3)  - &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k+q,l-1)/rho_sf(q,-1,3) + &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k+q,l-2)/rho_sf(q,-2,3) - &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k+q,l+2)/rho_sf(q,2,3) )
                                 end do
 
                                 vflux_L = sum(coeff_L(-1:3)*(dvel1(-1:3)+dvel2(-1:3)))
@@ -2341,17 +2341,17 @@ contains
                                 !! dvy & dux
                                 !$acc loop seq 
                                 do q = -2, 3
-                                    dvel1(q) = (1/(12._wp*dy(k))) * ( &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
-                                    q_prim_vf(momxb+1)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
-                                    q_prim_vf(momxb+1)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
+                                    dvel1(q) = (1/(2._wp*dy(k))) * ( &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k+1+q,l)/rho_sf(q,1,2) - &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k-1+q,l)/rho_sf(q,-1,2) + &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k-2+q,l)/rho_sf(q,-2,2) - &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k+2+q,l)/rho_sf(q,2,2) )
 
-                                    dvel2(q) = (1/(12._wp*dx(j))) * ( &
-                                    8._wp*q_prim_vf(momxb)%sf(j+1,k+q,l)/rho_sf(q,1,1) - &
-                                    8._wp*q_prim_vf(momxb)%sf(j-1,k+q,l)/rho_sf(q,-1,1) + &
-                                    q_prim_vf(momxb)%sf(j-2,k+q,l)/rho_sf(q,-2,1) - &
-                                    q_prim_vf(momxb)%sf(j+2,k+q,l)/rho_sf(q,2,1) )
+                                    dvel2(q) = (1/(2._wp*dx(j))) * ( &
+                                    1._wp*q_prim_vf(momxb)%sf(j+1,k+q,l)/rho_sf(q,1,1) - &
+                                    1._wp*q_prim_vf(momxb)%sf(j-1,k+q,l)/rho_sf(q,-1,1) + &
+                                    0._wp*q_prim_vf(momxb)%sf(j-2,k+q,l)/rho_sf(q,-2,1) - &
+                                    0._wp*q_prim_vf(momxb)%sf(j+2,k+q,l)/rho_sf(q,2,1) )
                                 end do
 
                                 vflux_L = sum(coeff_L(-1:3)*(4._wp*dvel1(-1:3)-2._wp*dvel2(-1:3))/3._wp)
@@ -2380,11 +2380,11 @@ contains
                                 !!dwz
                                 !$acc loop seq 
                                 do q = -2, 3
-                                    dvel2(q) = (1/(12._wp*dz(l))) * ( &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j,k+q,l+1)/rho_sf(q,1,3) - &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j,k+q,l-1)/rho_sf(q,-1,3) + &
-                                    q_prim_vf(momxb+2)%sf(j,k+q,l-2)/rho_sf(q,-2,3) - &
-                                    q_prim_vf(momxb+2)%sf(j,k+q,l+2)/rho_sf(q,2,3) )
+                                    dvel2(q) = (1/(2._wp*dz(l))) * ( &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j,k+q,l+1)/rho_sf(q,1,3) - &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j,k+q,l-1)/rho_sf(q,-1,3) + &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j,k+q,l-2)/rho_sf(q,-2,3) - &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j,k+q,l+2)/rho_sf(q,2,3) )
                                 end do
 
                                 vflux_L = sum(coeff_L(-1:3)*(-2._wp*dvel2(-1:3))/3._wp)
@@ -2755,18 +2755,18 @@ contains
                                 !! dwx & duz
                                 !$acc loop seq 
                                 do q = -2, 3
-                                    dvel1(q) = (1/(12._wp*dz(l))) * ( &
-                                    8._wp*q_prim_vf(momxb)%sf(j,k,l+1+q)/rho_sf(q,1,3) - &
-                                    8._wp*q_prim_vf(momxb)%sf(j,k,l-1+q)/rho_sf(q,-1,3)  + &
-                                    q_prim_vf(momxb)%sf(j,k,l-2+q)/rho_sf(q,-2,3)  - &
-                                    q_prim_vf(momxb)%sf(j,k,l+2+q)/rho_sf(q,2,3)  )
+                                    dvel1(q) = (1/(2._wp*dz(l))) * ( &
+                                    1._wp*q_prim_vf(momxb)%sf(j,k,l+1+q)/rho_sf(q,1,3) - &
+                                    1._wp*q_prim_vf(momxb)%sf(j,k,l-1+q)/rho_sf(q,-1,3)  + &
+                                    0._wp*q_prim_vf(momxb)%sf(j,k,l-2+q)/rho_sf(q,-2,3)  - &
+                                    0._wp*q_prim_vf(momxb)%sf(j,k,l+2+q)/rho_sf(q,2,3)  )
 
 
-                                    dvel2(q) = (1/(12._wp*dx(j))) * ( &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j+1,k,l+q)/rho_sf(q,1,1) - &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j-1,k,l+q)/rho_sf(q,-1,1) + &
-                                    q_prim_vf(momxb+2)%sf(j-2,k,l+q)/rho_sf(q,-2,1) - &
-                                    q_prim_vf(momxb+2)%sf(j+2,k,l+q)/rho_sf(q,2,1) )
+                                    dvel2(q) = (1/(2._wp*dx(j))) * ( &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j+1,k,l+q)/rho_sf(q,1,1) - &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j-1,k,l+q)/rho_sf(q,-1,1) + &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j-2,k,l+q)/rho_sf(q,-2,1) - &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j+2,k,l+q)/rho_sf(q,2,1) )
                                 end do
 
                                 if(num_fluids > 1) then 
@@ -2835,17 +2835,17 @@ contains
                                 !! dwy & dvz
                                 !$acc loop seq 
                                 do q = -2, 3
-                                    dvel1(q) = (1/(12._wp*dy(k))) * ( &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j,k+1,l+q)/rho_sf(q,1,2) - &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j,k-1,l+q)/rho_sf(q,-1,2)  + &
-                                    q_prim_vf(momxb+2)%sf(j,k-2,l+q)/rho_sf(q,-2,2)  - &
-                                    q_prim_vf(momxb+2)%sf(j,k+2,l+q)/rho_sf(q,2,2)  )
+                                    dvel1(q) = (1/(2._wp*dy(k))) * ( &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j,k+1,l+q)/rho_sf(q,1,2) - &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j,k-1,l+q)/rho_sf(q,-1,2)  + &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j,k-2,l+q)/rho_sf(q,-2,2)  - &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j,k+2,l+q)/rho_sf(q,2,2)  )
 
-                                    dvel2(q) = (1/(12._wp*dz(l))) * ( &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k,l+1+q)/rho_sf(q,1,3) - &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k,l-1+q)/rho_sf(q,-1,3)  + &
-                                    q_prim_vf(momxb+1)%sf(j,k,l-2+q)/rho_sf(q,-2,3)  - &
-                                    q_prim_vf(momxb+1)%sf(j,k,l+2+q)/rho_sf(q,2,3)  )
+                                    dvel2(q) = (1/(2._wp*dz(l))) * ( &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k,l+1+q)/rho_sf(q,1,3) - &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k,l-1+q)/rho_sf(q,-1,3)  + &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k,l-2+q)/rho_sf(q,-2,3)  - &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k,l+2+q)/rho_sf(q,2,3)  )
                                 end do
 
                                 vflux_L = sum(coeff_L(-1:3)*(dvel1(-1:3)+dvel2(-1:3)))
@@ -2874,18 +2874,18 @@ contains
                                 !! dwz & dux
                                 !$acc loop seq 
                                 do q = -2, 3
-                                    dvel1(q) = (1/(12._wp*dz(l))) * ( &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j,k,l+1+q)/rho_sf(q,1,3) - &
-                                    8._wp*q_prim_vf(momxb+2)%sf(j,k,l-1+q)/rho_sf(q,-1,3)  + &
-                                    q_prim_vf(momxb+2)%sf(j,k,l-2+q)/rho_sf(q,-2,3)  - &
-                                    q_prim_vf(momxb+2)%sf(j,k,l+2+q)/rho_sf(q,2,3)  )
+                                    dvel1(q) = (1/(2._wp*dz(l))) * ( &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j,k,l+1+q)/rho_sf(q,1,3) - &
+                                    1._wp*q_prim_vf(momxb+2)%sf(j,k,l-1+q)/rho_sf(q,-1,3)  + &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j,k,l-2+q)/rho_sf(q,-2,3)  - &
+                                    0._wp*q_prim_vf(momxb+2)%sf(j,k,l+2+q)/rho_sf(q,2,3)  )
 
 
-                                    dvel2(q) = (1/(12._wp*dx(j))) * ( &
-                                    8._wp*q_prim_vf(momxb)%sf(j+1,k,l+q)/rho_sf(q,1,1) - &
-                                    8._wp*q_prim_vf(momxb)%sf(j-1,k,l+q)/rho_sf(q,-1,1) + &
-                                    q_prim_vf(momxb)%sf(j-2,k,l+q)/rho_sf(q,-2,1) - &
-                                    q_prim_vf(momxb)%sf(j+2,k,l+q)/rho_sf(q,2,1) )
+                                    dvel2(q) = (1/(2._wp*dx(j))) * ( &
+                                    1._wp*q_prim_vf(momxb)%sf(j+1,k,l+q)/rho_sf(q,1,1) - &
+                                    1._wp*q_prim_vf(momxb)%sf(j-1,k,l+q)/rho_sf(q,-1,1) + &
+                                    0._wp*q_prim_vf(momxb)%sf(j-2,k,l+q)/rho_sf(q,-2,1) - &
+                                    0._wp*q_prim_vf(momxb)%sf(j+2,k,l+q)/rho_sf(q,2,1) )
                                 end do
 
                                 vflux_L = sum(coeff_L(-1:3)*(4._wp*dvel1(-1:3)-2._wp*dvel2(-1:3))/3._wp)
@@ -2914,11 +2914,11 @@ contains
                                 !!dvy
                                 !$acc loop seq 
                                 do q = -2, 3
-                                    dvel2(q) = (1/(12._wp*dy(k))) * ( &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k+1,l+q)/rho_sf(q,1,2) - &
-                                    8._wp*q_prim_vf(momxb+1)%sf(j,k-1,l+q)/rho_sf(q,-1,2) + &
-                                    q_prim_vf(momxb+1)%sf(j,k-2,l+q)/rho_sf(q,-2,2) - &
-                                    q_prim_vf(momxb+1)%sf(j,k+2,l+q)/rho_sf(q,2,2) )
+                                    dvel2(q) = (1/(2._wp*dy(k))) * ( &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k+1,l+q)/rho_sf(q,1,2) - &
+                                    1._wp*q_prim_vf(momxb+1)%sf(j,k-1,l+q)/rho_sf(q,-1,2) + &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k-2,l+q)/rho_sf(q,-2,2) - &
+                                    0._wp*q_prim_vf(momxb+1)%sf(j,k+2,l+q)/rho_sf(q,2,2) )
                                 end do
 
                                 vflux_L = sum(coeff_L(-1:3)*(-2._wp*dvel2(-1:3))/3._wp)
