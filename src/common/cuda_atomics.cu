@@ -3,7 +3,8 @@
 #include <cuda_fp16.h>
 
 extern "C" {
-    __device__ __half atomicAdd_half(__half* address, __half val) {
-        return atomicAdd(address, val);
+    __device__ void atomicAdd_half(__half* address, float val) {
+        atomicAdd(address, __float2half(val));
+        return;
     }
 }

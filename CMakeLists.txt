@@ -197,6 +197,7 @@ elseif ((CMAKE_Fortran_COMPILER_ID STREQUAL "NVHPC") OR (CMAKE_Fortran_COMPILER_
 	    $<$<COMPILE_LANGUAGE:Fortran>:-Minfo=inline>
         $<$<COMPILE_LANGUAGE:Fortran>:-Minfo=accel>
         $<$<COMPILE_LANGUAGE:Fortran>:-Minform=warn>
+        $<$<COMPILE_LANGUAGE:Fortran>:-cuda>
     )
 
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -382,6 +383,7 @@ macro(HANDLE_SOURCES target useCommon)
             file(GLOB common_CUs CONFIGURE_DEPENDS "${common_DIR}/*.cu")
             list(APPEND ${target}_SRCs ${common_CUs})
         endif()
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -rdc=true")
     endif()
 endmacro()
 

@@ -40,17 +40,15 @@
 
 module atomic_mod
     use, intrinsic :: iso_c_binding
-    use cudafor
     implicit none
 
     interface
-        attributes(device) function atomicAdd_half(addr, val) bind(C, name="atomicAdd_half")
+        subroutine atomicAdd_half(addr, val) bind(C, name="atomicAdd_half")
             use, intrinsic :: iso_c_binding
             real(2) :: addr(*)
-            real(2) :: val(*)
-            real(2) :: atomicAdd_half
+            real(4),value :: val
             !$acc routine(atomicAdd_half) seq
-        end function atomicAdd_half
+        end subroutine atomicAdd_half
 
     end interface
 end module

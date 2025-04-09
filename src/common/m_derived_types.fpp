@@ -26,7 +26,7 @@ module m_derived_types
     end type scalar_field
 
     type scalar_field_half
-        real(4), pointer, dimension(:, :, :) :: sf => null()
+        real(2), pointer, dimension(:, :, :) :: sf => null()
     end type scalar_field_half
 
     !> Derived type for bubble variables pb and mv at quadrature nodes (qbmm)
