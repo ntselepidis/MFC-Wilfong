@@ -128,7 +128,7 @@
 
 #:def ATOMIC_ADD(result, rhs)
 #if 1
-    atomicAdd_half(${result}$, ${rhs}$)
+    call atomicAdd_half(${result}$, ${rhs}$)
 #else
     !$acc atomic
     ${result}$ = ${result}$ + ${rhs}$

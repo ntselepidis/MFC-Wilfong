@@ -119,9 +119,9 @@ contains
             intent(inout) :: bc_type
 
         ! if (.not. parallel_io) then
-        !     call s_read_serial_data_files(q_cons_vf, bc_type)
+             call s_read_serial_data_files(q_cons_vf, bc_type)
         ! else
-            call s_read_parallel_data_files(q_cons_vf, bc_type)
+            !call s_read_parallel_data_files(q_cons_vf, bc_type)
         ! end if
 
     end subroutine s_read_data_files
@@ -252,7 +252,7 @@ contains
         !! @param q_cons_vf Cell-averaged conservative variables
     subroutine s_read_serial_data_files(q_cons_vf, bc_type)
 
-        type(scalar_field), dimension(sys_size), intent(INOUT) :: q_cons_vf
+        type(scalar_field_half), dimension(sys_size), intent(INOUT) :: q_cons_vf
 
         type(integer_field), &
             dimension(1:num_dims, -1:1), &

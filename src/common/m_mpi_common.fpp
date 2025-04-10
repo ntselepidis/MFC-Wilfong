@@ -65,9 +65,15 @@ contains
     !! @param beta Eulerian void fraction from lagrangian bubbles
     subroutine s_initialize_mpi_data(q_cons_vf, ib_markers, levelset, levelset_norm, beta)
 
+#ifdef MFC_SIMULATION
+        type(scalar_field_half), &
+            dimension(sys_size), &
+            intent(in) :: q_cons_vf
+#else
         type(scalar_field), &
             dimension(sys_size), &
             intent(in) :: q_cons_vf
+#endif
 
         type(integer_field), &
             optional, &
@@ -105,31 +111,31 @@ contains
             MPI_IO_DATA%var(i)%sf => q_cons_vf(i)%sf(0:m, 0:n, 0:p)
         end do
 
-        if (present(beta)) then
-            MPI_IO_DATA%var(alt_sys)%sf => beta%sf(0:m, 0:n, 0:p)
-        end if
+        !if (present(beta)) then
+            !MPI_IO_DATA%var(alt_sys)%sf => beta%sf(0:m, 0:n, 0:p)
+        !end if
 
         !Additional variables pb and mv for non-polytropic qbmm
 #ifdef MFC_PRE_PROCESS
-        if (qbmm .and. .not. polytropic) then
-            do i = 1, nb
-                do j = 1, nnode
-                    MPI_IO_DATA%var(sys_size + (i - 1)*nnode + j)%sf => pb%sf(0:m, 0:n, 0:p, j, i)
-                    MPI_IO_DATA%var(sys_size + (i - 1)*nnode + j + nb*nnode)%sf => mv%sf(0:m, 0:n, 0:p, j, i)
-                end do
-            end do
-        end if
+        !if (qbmm .and. .not. polytropic) then
+            !do i = 1, nb
+                !do j = 1, nnode
+                    !MPI_IO_DATA%var(sys_size + (i - 1)*nnode + j)%sf => pb%sf(0:m, 0:n, 0:p, j, i)
+                    !MPI_IO_DATA%var(sys_size + (i - 1)*nnode + j + nb*nnode)%sf => mv%sf(0:m, 0:n, 0:p, j, i)
+                !end do
+            !end do
+        !end if
 #endif
 
 #ifdef MFC_SIMULATION
-        if (qbmm .and. .not. polytropic) then
-            do i = 1, nb
-                do j = 1, nnode
-                    MPI_IO_DATA%var(sys_size + (i - 1)*nnode + j)%sf => pb_ts(1)%sf(0:m, 0:n, 0:p, j, i)
-                    MPI_IO_DATA%var(sys_size + (i - 1)*nnode + j + nb*nnode)%sf => mv_ts(1)%sf(0:m, 0:n, 0:p, j, i)
-                end do
-            end do
-        end if
+        !if (qbmm .and. .not. polytropic) then
+            !do i = 1, nb
+                !do j = 1, nnode
+                    !MPI_IO_DATA%var(sys_size + (i - 1)*nnode + j)%sf => pb_ts(1)%sf(0:m, 0:n, 0:p, j, i)
+                    !MPI_IO_DATA%var(sys_size + (i - 1)*nnode + j + nb*nnode)%sf => mv_ts(1)%sf(0:m, 0:n, 0:p, j, i)
+                !end do
+            !end do
+        !end if
 #endif
         ! Define global(g) and local(l) sizes for flow variables
         sizes_glb(1) = m_glb + 1; sizes_loc(1) = m + 1

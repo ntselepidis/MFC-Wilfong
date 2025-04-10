@@ -78,7 +78,7 @@ contains
         !! @param t_step Current time step
     subroutine s_write_data_files(q_cons_vf, q_T_sf, q_prim_vf, t_step, beta)
 
-        type(scalar_field), &
+        type(scalar_field_half), &
             dimension(sys_size), &
             intent(in) :: q_cons_vf
 
@@ -451,7 +451,7 @@ contains
         !!  @param t_step Current time-step
     subroutine s_write_serial_data_files(q_cons_vf, q_T_sf, q_prim_vf, t_step, beta)
 
-        type(scalar_field), dimension(sys_size), intent(in) :: q_cons_vf
+        type(scalar_field_half), dimension(sys_size), intent(in) :: q_cons_vf
         type(scalar_field), intent(inout) :: q_T_sf
         type(scalar_field), dimension(sys_size), intent(inout) :: q_prim_vf
         integer, intent(in) :: t_step
@@ -585,16 +585,16 @@ contains
 
         if (.not. file_exist) call s_create_directory(trim(t_step_dir))
 
-        if ((prim_vars_wrt .or. (n == 0 .and. p == 0)) .and. (.not. igr)) then
-            call s_convert_conservative_to_primitive_variables(q_cons_vf, q_T_sf, q_prim_vf, idwint)
-            do i = 1, sys_size
-                !$acc update host(q_prim_vf(i)%sf(:,:,:))
-            end do
-            ! q_prim_vf(bubxb) stores the value of nb needed in riemann solvers, so replace with true primitive value (=1._wp)
-            if (qbmm) then
-                q_prim_vf(bubxb)%sf = 1._wp
-            end if
-        end if
+        !if ((prim_vars_wrt .or. (n == 0 .and. p == 0)) .and. (.not. igr)) then
+            !call s_convert_conservative_to_primitive_variables(q_cons_vf, q_T_sf, q_prim_vf, idwint)
+            !do i = 1, sys_size
+                !!$acc update host(q_prim_vf(i)%sf(:,:,:))
+            !end do
+            !! q_prim_vf(bubxb) stores the value of nb needed in riemann solvers, so replace with true primitive value (=1._wp)
+            !if (qbmm) then
+                !q_prim_vf(bubxb)%sf = 1._wp
+            !end if
+        !end if
 
         !1D
         if (n == 0 .and. p == 0) then
@@ -849,7 +849,7 @@ contains
         !!  @param beta Eulerian void fraction from lagrangian bubbles
     subroutine s_write_parallel_data_files(q_cons_vf, q_prim_vf, t_step, beta)
 
-        type(scalar_field), dimension(sys_size), intent(in) :: q_cons_vf
+        type(scalar_field_half), dimension(sys_size), intent(in) :: q_cons_vf
         type(scalar_field), dimension(sys_size), intent(inout) :: q_prim_vf
         integer, intent(in) :: t_step
         type(scalar_field), intent(inout), optional :: beta

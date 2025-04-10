@@ -49,10 +49,17 @@ module m_derived_types
         real(wp), pointer, dimension(:, :, :, :, :) :: sf => null()
     end type levelset_norm_field
 
+#ifdef MFC_SIMULATION
+    type mpi_io_var
+        integer, allocatable, dimension(:) :: view
+        type(scalar_field_half), allocatable, dimension(:) :: var
+    end type mpi_io_var
+#else
     type mpi_io_var
         integer, allocatable, dimension(:) :: view
         type(scalar_field), allocatable, dimension(:) :: var
     end type mpi_io_var
+#endif
 
     type mpi_io_ib_var
         integer :: view

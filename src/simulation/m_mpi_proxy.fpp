@@ -1100,8 +1100,6 @@ contains
         ! Send/Recv
         #:for rdma_mpi in [False, True]
             if (rdma_mpi .eqv. ${'.true.' if rdma_mpi else '.false.'}$) then
-                p_send => q_cons_buff_send(0)
-                p_recv => q_cons_buff_recv(0)
                 #:if rdma_mpi
                     !$acc data attach(p_send, p_recv)
                     !$acc host_data use_device(p_send, p_recv)
@@ -1114,8 +1112,8 @@ contains
                 #:endif
 
                 call MPI_SENDRECV( &
-                    p_send, buffer_count, mpi_p, dst_proc, send_tag, &
-                    p_recv, buffer_count, mpi_p, src_proc, recv_tag, &
+                    q_cons_buff_send, buffer_count, MPI_CHAR, dst_proc, send_tag, &
+                    q_cons_buff_recv, buffer_count, MPI_CHAR, src_proc, recv_tag, &
                     MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
                 call nvtxEndRange ! RHS-MPI-SENDRECV-(NO)-RDMA
 
