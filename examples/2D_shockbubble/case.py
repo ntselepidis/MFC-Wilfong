@@ -1,6 +1,18 @@
-#!/usr/bin/env python3
-import math
-import json
+import json, math, argparse
+
+parser = argparse.ArgumentParser(prog="Benchmarking Case 1", description="This MFC case was created for the purposes of benchmarking MFC.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+parser.add_argument("--mfc", type=json.loads, default="{}", metavar="DICT", help="MFC's toolchain's internal state.")
+parser.add_argument("--gbpp", type=int, metavar="MEM", default=16, help="Adjusts the problem size per rank to fit into [MEM] GB of GPU memory per GPU.")
+
+ARGS = vars(parser.parse_args())
+DICT = ARGS["mfc"]
+
+if DICT["gpu"]:
+    N = 500
+else:
+    N = 100
+
 
 ps = 248758.567
 gam = 1.4
@@ -9,15 +21,17 @@ c_l = math.sqrt(1.4 * ps / rho)
 vel = 230.0
 
 leng = 1.0
-Ny = 100.0
+Ny = N*leng
 Nx = Ny * 3
 dx = leng / Nx
 
-time_end = 5 * leng / vel
-cfl = 0.1
+time_end = 2 * leng / vel
+cfl = 0.8
 
 dt = cfl * dx / c_l
 Nt = int(time_end / dt)
+
+eps = 1e-8
 
 # Configuring case dictionary
 print(
@@ -36,7 +50,7 @@ print(
             "dt": dt,
             "t_step_start": 0,
             "t_step_stop": Nt,
-            "t_step_save": int(Nt / 20.0),
+            "t_step_save": int(Nt / 100),
             # Simulation Algorithm Parameters
             "num_patches": 3,
             "model_eqns": 2,
@@ -73,10 +87,10 @@ print(
             "patch_icpp(1)%vel(1)": vel,
             "patch_icpp(1)%vel(2)": 0.0e00,
             "patch_icpp(1)%pres": 101325.0,
-            "patch_icpp(1)%alpha_rho(1)": 1.29,
-            "patch_icpp(1)%alpha_rho(2)": 0.0e00,
-            "patch_icpp(1)%alpha(1)": 1.0e00,
-            "patch_icpp(1)%alpha(2)": 0.0e00,
+            "patch_icpp(1)%alpha_rho(1)": (1 - eps)*1.29,
+            "patch_icpp(1)%alpha_rho(2)": eps,
+            "patch_icpp(1)%alpha(1)": 1 - eps,
+            "patch_icpp(1)%alpha(2)": eps,
             # Patch 2: Shocked state
             "patch_icpp(2)%geometry": 3,
             "patch_icpp(2)%alter_patch(1)": "T",
@@ -84,13 +98,13 @@ print(
             "patch_icpp(2)%y_centroid": 0.0,
             "patch_icpp(2)%length_x": leng / 4.0,
             "patch_icpp(2)%length_y": leng,
-            "patch_icpp(2)%vel(1)": vel,
+            "patch_icpp(2)%vel(1)": 0.0e00,
             "patch_icpp(2)%vel(2)": 0.0e00,
             "patch_icpp(2)%pres": ps,
-            "patch_icpp(2)%alpha_rho(1)": 2.4,
-            "patch_icpp(2)%alpha_rho(2)": 0.0e00,
-            "patch_icpp(2)%alpha(1)": 1.0e00,
-            "patch_icpp(2)%alpha(2)": 0.0e00,
+            "patch_icpp(2)%alpha_rho(1)": (1 - eps)*2.4,
+            "patch_icpp(2)%alpha_rho(2)": eps,
+            "patch_icpp(2)%alpha(1)": 1 - eps,
+            "patch_icpp(2)%alpha(2)": eps,
             # Patch 3: Bubble
             "patch_icpp(3)%geometry": 2,
             "patch_icpp(3)%x_centroid": 0.0e00,
@@ -100,10 +114,10 @@ print(
             "patch_icpp(3)%vel(1)": 0.0,
             "patch_icpp(3)%vel(2)": 0.0e00,
             "patch_icpp(3)%pres": 101325.0,
-            "patch_icpp(3)%alpha_rho(1)": 0.0e00,
-            "patch_icpp(3)%alpha_rho(2)": 0.167,
-            "patch_icpp(3)%alpha(1)": 0.0e00,
-            "patch_icpp(3)%alpha(2)": 1.0e00,
+            "patch_icpp(3)%alpha_rho(1)": eps,
+            "patch_icpp(3)%alpha_rho(2)": (1 - eps)*0.167,
+            "patch_icpp(3)%alpha(1)": eps,
+            "patch_icpp(3)%alpha(2)": 1 - eps,
             # Fluids Physical Parameters
             "fluid_pp(1)%gamma": 1.0e00 / (1.4e00 - 1.0e00),
             "fluid_pp(1)%pi_inf": 0.0,
