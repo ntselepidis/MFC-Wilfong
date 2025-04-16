@@ -28,7 +28,7 @@ renderView1.StereoType = 'Crystal Eyes'
 renderView1.CameraPosition = [1.0, 0.0, 6.109051323707208]
 renderView1.CameraFocalPoint = [1.0, 0.0, 0.0]
 renderView1.CameraFocalDisk = 1.0
-renderView1.CameraParallelScale = 0.5546458803081498
+renderView1.CameraParallelScale = 0.6711215151728613
 renderView1.UseColorPaletteForBackground = 0
 renderView1.Background = [1.0, 1.0, 1.0]
 renderView1.BackEnd = 'OSPRay raycaster'
@@ -144,6 +144,6 @@ i = 0
 # Save all timesteps
 for t in timeSteps:
     animationScene.AnimationTime = t
-    SaveScreenshot(f"{case_dir}/render/pic.{i:04d}.png", renderView1, ImageResolution=[1555,723])
+    SaveScreenshot(f"{case_dir}/render/pic.{i:04d}.png", renderView1, ImageResolution=[2110,722])
     print(i)
     i = i + 1
