@@ -21,19 +21,18 @@
 ```
 3b. Run the code with GPU support (in a batch job)
 ```
-./mfc.sh run examples/2D_shockbubble/case.py --case-optimization --gpu -N 1 -n 1 -c phoenix -j 32 \\
-    -e batch -a <account> -# <job_name> -t 1:00:00
+./mfc.sh run examples/2D_shockbubble/case.py --case-optimization --gpu -N 1 -n 1 -c phoenix -j 32 -e batch -a <account> -# <job_name> -w 1:00:00
 ```
 
 ## Post Processing on Phoenix (interactive mode)
-0. Begin the `MFC-Wilfong` directory
+0. Begin in the `MFC-Wilfong/examples/2D_shockbubble/` directory
 1. Load modules for visualization on Phoenix
 ```
 module load paraview/5.12.0-egl cuda
 ```
 2. Visualize the results using `pvbatch`
 ```
-pvbatch examples/2D_shockbubble/visualize.py
+pvbatch visualize.py
 ```
 4. Download the images (stored in `examples/2D_shockbubble/render`) to your local machine with `rsync`, `scp`, or your tool of choice
 5. Render the video with `ffmpeg` on your local machine
@@ -42,7 +41,7 @@ ffmpeg -r 30 -f image2 -i pic.%04d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p
 ```
 
 ## Post Processing on Phoenix (batch mode)
-0. Move to the case directory with `cd examples/2D_shockbubble`
+0. Begin in the `MFC-Wilfong/examples/2D_shockbubble/` directory
 1. Paste the following into a SLURM submission script `visualize.sh`:
 ```
 #!/bin/bash
@@ -50,7 +49,7 @@ ffmpeg -r 30 -f image2 -i pic.%04d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p
 #SBATCH -J visualize
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=16
-#SBATCH --gre=gpu:H100:1
+#SBATCH --gre=gpu:RTX_6000:1
 #SBATCH --output="visualize.out"
 #SBATCH --error="visualize.err"
 #SBATCH -t 00:10:00
