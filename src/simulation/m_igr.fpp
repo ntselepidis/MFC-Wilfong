@@ -662,7 +662,13 @@ contains
                                 vflux_L_arr = 0._wp
                                 vflux_R_arr = 0._wp
 
-                                !DIR$ unroll 6
+                                #:if MFC_CASE_OPTIMIZATION
+                                    #:if igr_order == 5
+                                        !DIR$ unroll 6
+                                    #:elif igr_order == 3
+                                        !DIR$ unroll 4
+                                    #:endif
+                                #:endif
                                 !$acc loop seq
                                 do q = vidxb, vidxe
                                     dvel_small = 0._wp
@@ -952,6 +958,12 @@ contains
 
                                 !$acc loop seq
                                 do i = 1, num_dims
+                                    print*, i, "q_vf(momxb+i-1)%sf(j-1,k,l)", q_cons_vf(momxb+i-1)%sf(j-1,k,l)
+                                    print*, i, "q_vf(momxb+i-1)%sf(j,k,l)", q_cons_vf(momxb+i-1)%sf(j,k,l)
+                                    print*, i, "q_vf(momxb+i-1)%sf(j+1,k,l)",q_cons_vf(momxb+i-1)%sf(j+1,k,l)
+                                    print*, i, "q_vf(momxb+i-1)%sf(j+2,k,l)",q_cons_vf(momxb+i-1)%sf(j+2,k,l)
+                                    print*, i, "q_vf(momxb+i-1)%sf(j+3,k,l)", q_cons_vf(momxb+i-1)%sf(j+3,k,l)
+                                    print*, i, "rho_L", rho_L
                                     vel_L(i) = ((1._wp/60._wp)*(-3._wp*q_cons_vf(momxb + i - 1)%sf(j - 1, k, l) + &
                                                                 27._wp*q_cons_vf(momxb + i - 1)%sf(j, k, l) + &
                                                                 47._wp*q_cons_vf(momxb + i - 1)%sf(j + 1, k, l) - &
@@ -976,6 +988,9 @@ contains
                                                       2._wp*q_cons_vf(E_idx)%sf(j - 2, k, l))
                             end if
 
+
+                            print*, "vel_L beforeX = ", vel_L
+                            print*, "rho_L beforeX = ", rho_L
                             call s_get_derived_states(E_L, gamma_L, pi_inf_L, rho_L, vel_L, &
                                                       E_R, gamma_R, pi_inf_R, rho_R, vel_R, &
                                                       pres_L, pres_R, cfl)
@@ -1154,7 +1169,13 @@ contains
                                 vflux_L_arr = 0._wp
                                 vflux_R_arr = 0._wp
 
-                                !DIR$ unroll 6
+                                #:if MFC_CASE_OPTIMIZATION
+                                    #:if igr_order == 5
+                                        !DIR$ unroll 6
+                                    #:elif igr_order == 3
+                                        !DIR$ unroll 4
+                                    #:endif
+                                #:endif
                                 !$acc loop seq
                                 do q = vidxb, vidxe
                                     dvel_small = 0._wp
@@ -1735,7 +1756,13 @@ contains
                                 vflux_L_arr = 0._wp
                                 vflux_R_arr = 0._wp
 
-                                !DIR$ unroll 6
+                                #:if MFC_CASE_OPTIMIZATION
+                                    #:if igr_order == 5
+                                        !DIR$ unroll 6
+                                    #:elif igr_order == 3
+                                        !DIR$ unroll 4
+                                    #:endif
+                                #:endif
                                 !$acc loop seq
                                 do q = vidxb, vidxe
                                     dvel_small = 0._wp
@@ -2010,6 +2037,7 @@ contains
                                                       2._wp*q_cons_vf(E_idx)%sf(j, k - 2, l))
                             end if
 
+                            print*, "vel_L beforeY = ", vel_L
                             call s_get_derived_states(E_L, gamma_L, pi_inf_L, rho_L, vel_L, &
                                                       E_R, gamma_R, pi_inf_R, rho_R, vel_R, &
                                                       pres_L, pres_R, cfl)
@@ -2186,7 +2214,13 @@ contains
                                 vflux_L_arr = 0._wp
                                 vflux_R_arr = 0._wp
 
-                                !DIR$ unroll 6
+                                #:if MFC_CASE_OPTIMIZATION
+                                    #:if igr_order == 5
+                                        !DIR$ unroll 6
+                                    #:elif igr_order == 3
+                                        !DIR$ unroll 4
+                                    #:endif
+                                #:endif
                                 !$acc loop seq
                                 do q = vidxb, vidxe
                                     dvel_small = 0._wp
@@ -2521,6 +2555,7 @@ contains
                                                   2._wp*q_cons_vf(E_idx)%sf(j, k, l - 2))
                         end if
 
+                        print*, "vel_L beforeZ = ", vel_L
                         call s_get_derived_states(E_L, gamma_L, pi_inf_L, rho_L, vel_L, &
                                                   E_R, gamma_R, pi_inf_R, rho_R, vel_R, &
                                                   pres_L, pres_R, cfl)
@@ -2697,7 +2732,13 @@ contains
                             vflux_L_arr = 0._wp
                             vflux_R_arr = 0._wp
 
-                            !DIR$ unroll 6
+                            #:if MFC_CASE_OPTIMIZATION
+                                #:if igr_order == 5
+                                    !DIR$ unroll 6
+                                #:elif igr_order == 3
+                                    !DIR$ unroll 4
+                                #:endif
+                            #:endif
                             !$acc loop seq
                             do q = vidxb, vidxe
                                 dvel_small = 0._wp
@@ -2885,10 +2926,14 @@ contains
 
     end subroutine s_igr_riemann_solver
 
-    pure subroutine s_get_derived_states(E_L, gamma_L, pi_inf_L, rho_L, vel_L, &
+    impure subroutine s_get_derived_states(E_L, gamma_L, pi_inf_L, rho_L, vel_L, &
                                          E_R, gamma_R, pi_inf_R, rho_R, vel_R, &
                                          pres_L, pres_R, cfl)
+#ifdef _CRAYFTN
+        !$DIR INLINEALWAYS s_get_derived_states
+#else
         !$acc routine seq
+#endif
         real(wp), intent(in) :: E_L, gamma_L, pi_inf_L, rho_L
         real(wp), intent(in) :: E_R, gamma_R, pi_inf_R, rho_R
         real(wp), dimension(num_dims), intent(in) :: vel_L, vel_R
@@ -2912,6 +2957,11 @@ contains
                       sqrt(vel_R(1)**2._wp + vel_R(2)**2._wp)) + &
                   max(a_L, a_R)
         elseif (num_dims == 3) then
+            print*, "E_L = ", E_L
+            print*, "pi_inf_L = ", pi_inf_L
+            print*, "rho_L = ", rho_L
+            print*, "vel_L = ", vel_L
+            print*, "gamma_L = ", gamma_L
             pres_L = (E_L - pi_inf_L - 0.5_wp*rho_L*(vel_L(1)**2._wp + vel_L(2)**2._wp + vel_L(3)**2._wp))/gamma_L
             pres_R = (E_R - pi_inf_R - 0.5_wp*rho_R*(vel_R(1)**2._wp + vel_R(2)**2._wp + vel_R(3)**2._wp))/gamma_R
 
@@ -2947,6 +2997,16 @@ contains
                             rhs_vf(i)%sf(j, k, l) = 1._wp/dx(j)* &
                                                     (flux_vf(i)%sf(j - 1, k, l) &
                                                      - flux_vf(i)%sf(j, k, l))
+                            if (rhs_vf(i)%sf(j,k,l) /= rhs_vf(i)%sf(j,k,l) .or. rhs_vf(i)%sf(j,k,l) > 1e16) then
+                                print*, "x i = ", i
+                                print*, "x j = ", j
+                                print*, "x k = ", k
+                                print*, "x j = ", l
+                                print*, "x, flux_vf(i)%sf(j-1,k,l) = ", flux_vf(i)%sf(j-1,k,l)
+                                print*, "x, flux_vf(i)%sf(j,k,l) = ", flux_vf(i)%sf(j,k,l)
+                                print*, "x dx(j) = ", dx(j)
+                                exit
+                            end if
                         end do
                     end do
                 end do
@@ -2961,6 +3021,16 @@ contains
                                 rhs_vf(i)%sf(j, k, l) + 1._wp/dy(k)* &
                                 (flux_vf(i)%sf(j, k - 1, l) &
                                  - flux_vf(i)%sf(j, k, l))
+                            if (rhs_vf(i)%sf(j,k,l) /= rhs_vf(i)%sf(j,k,l) .or. rhs_vf(i)%sf(j,k,l) > 1e16) then
+                                print*, "y i = ", i
+                                print*, "y j = ", j
+                                print*, "y k = ", k
+                                print*, "y l = ", l
+                                print*, "y flux_vf(i)%sf(j-1,k,l) = ", flux_vf(i)%sf(j-1,k,l)
+                                print*, "y flux_vf(i)%sf(j,k,l) = ", flux_vf(i)%sf(j,k,l)
+                                print*, "y dy(k) = ", dy(k)
+                                exit
+                            end if
                         end do
                     end do
                 end do
@@ -2975,6 +3045,16 @@ contains
                                 rhs_vf(i)%sf(j, k, l) + 1._wp/dz(l)* &
                                 (flux_vf(i)%sf(j, k, l - 1) &
                                  - flux_vf(i)%sf(j, k, l))
+                            if (rhs_vf(i)%sf(j,k,l) /= rhs_vf(i)%sf(j,k,l) .or. rhs_vf(i)%sf(j,k,l) > 1e16) then
+                                print*, "z i = ", i
+                                print*, "z j = ", j
+                                print*, "z k = ", k
+                                print*, "z l = ", l
+                                print*, "z flux_vf(i)%sf(j-1,k,l) = ", flux_vf(i)%sf(j-1,k,l)
+                                print*, "z flux_vf(i)%sf(j,k,l) = ", flux_vf(i)%sf(j,k,l)
+                                print*, "z dz(l) = ", dz(l)
+                                exit
+                            end if
                         end do
                     end do
                 end do
